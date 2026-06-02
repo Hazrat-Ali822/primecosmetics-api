@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PrimeCosmetics — Cosmetics Inventory & Point of Sale</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      /* 1. Brand & Core Colors (Teal Blue) */
+      --accent:       #0EA5E9;
+      --accent-hover: #0284C7;
+      --accent-soft:  #E0F2FE;
+      
+      /* 2. Layout & Surface Backgrounds */
+      --canvas:       #F8FAFC;
+      --surface:      #FFFFFF;
+      --border:       #E2E8F0;
+      
+      /* 3. Typography & Text Hierarchy */
+      --text-head:    #0F172A;
+      --text-body:    #334155;
+      --text-muted:   #64748B;
+      
+      /* 4. Semantic / Status Colors */
+      --success-bg:   #DCFCE7; --success-fg: #16A34A;
+      --warn-bg:      #FEF3C7; --warn-fg:    #D97706;
+      --danger-bg:    #FEE2E2; --danger-fg:  #DC2626;
+    }
+    * { font-family: 'DM Sans', sans-serif; box-sizing: border-box; }
+    body { background: var(--canvas); color: var(--text-body); }
+    .mono { font-family: 'DM Mono', monospace; }
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: var(--canvas); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+    .btn-primary { background: var(--accent); color: #fff; border-radius: 8px; padding: 8px 16px; font-weight: 600; font-size: 13px; transition: background .15s; cursor: pointer; border: none; }
+    .btn-primary:hover { background: var(--accent-hover); }
+    .btn-ghost { background: transparent; color: var(--text-body); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-weight: 500; font-size: 13px; transition: all .15s; cursor: pointer; }
+    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-danger { background: var(--danger-bg); color: var(--danger-fg); border-radius: 8px; padding: 6px 12px; font-weight: 600; font-size: 12px; cursor: pointer; border: none; transition: opacity .15s; }
+    .btn-danger:hover { opacity: .8; }
+    .badge { display:inline-flex; align-items:center; padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 600; }
+    .badge-success { background: var(--success-bg); color: var(--success-fg); }
+    .badge-warn    { background: var(--warn-bg);    color: var(--warn-fg); }
+    .badge-danger  { background: var(--danger-bg);  color: var(--danger-fg); }
+    .badge-info    { background: var(--accent-soft); color: var(--accent); }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; }
+    .nav-link { display:flex; align-items:center; gap:10px; padding:9px 12px; border-radius:8px; font-size:14px; font-weight:500; color:var(--text-muted); transition:all .15s; cursor:pointer; }
+    .nav-link:hover { background: var(--accent-soft); color: var(--accent); }
+    .nav-link.active { background: var(--accent-soft); color: var(--accent); font-weight:600; }
+    .tab-btn { padding: 6px 14px; border-radius:6px; font-size:13px; font-weight:500; cursor:pointer; border:none; background:transparent; color:var(--text-muted); transition:all .15s; }
+    .tab-btn.active { background:var(--accent); color:#fff; }
+    .input { border:1px solid var(--border); border-radius:8px; padding:8px 12px; font-size:13px; color:var(--text-body); outline:none; background:var(--surface); width:100%; transition:border .15s; }
+    .input:focus { border-color:var(--accent); }
+    .modal-overlay { position:fixed; inset:0; background:rgba(15,23,42,.45); backdrop-filter:blur(3px); z-index:1000; display:flex; align-items:center; justify-content:center; padding:12px; }
+    .toast { position:fixed; bottom:24px; right:24px; z-index:2000; display:flex; align-items:center; gap:10px; padding:12px 18px; border-radius:10px; font-size:13px; font-weight:500; box-shadow:0 4px 24px rgba(0,0,0,.12); animation: slideUp .25s ease; }
+    @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
+    .product-card { background:var(--surface); border:1px solid var(--border); border-radius:10px; padding:14px; cursor:pointer; transition:all .15s; user-select:none; }
+    .product-card:hover { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); }
+    .product-card.out-of-stock { opacity:.5; cursor:not-allowed; pointer-events:none; }
+    .cart-item { display:flex; align-items:center; gap:10px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .sidebar-collapsed { width:56px; }
+    .sidebar-collapsed .nav-label { display:none; }
+    .sidebar-collapsed .nav-link { justify-content:center; }
+    .sidebar-collapsed .brand-text { display:none; }
+    table { width:100%; border-collapse:collapse; font-size:13px; }
+    thead th { text-align:left; padding:10px 12px; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-muted); border-bottom:1px solid var(--border); background:var(--canvas); }
+    tbody tr { transition:background .1s; }
+    tbody tr:hover { background:var(--canvas); }
+    tbody td { padding:10px 12px; border-bottom:1px solid var(--border); color:var(--text-body); vertical-align:middle; }
+    .kpi-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 20px; }
+    .kbd { display:inline-block; padding:2px 6px; border:1px solid var(--border); border-radius:4px; font-size:11px; background:var(--canvas); font-family:'DM Mono',monospace; color:var(--text-muted); }
+    select.input { appearance:none; background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%2364748B' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); background-repeat:no-repeat; background-position:right 10px center; padding-right:28px; }
+    .sync-dot { width:8px; height:8px; border-radius:50%; background:#16A34A; animation:pulse 2s infinite; }
+    .sync-dot.offline { background:#DC2626; animation:none; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+    .shift-overlay { position:fixed; inset:0; background:rgba(15,23,42,.85); z-index:1500; display:flex; align-items:center; justify-content:center; }
+    .print-area { display:none; }
+    @media print { body > * { display:none; } .print-area { display:block !important; font-family:'DM Mono',monospace; font-size:12px; } }
+
+    /* ── RESPONSIVE: Mobile overlay sidebar ── */
+    #sidebarOverlay { display:none; position:fixed; inset:0; background:rgba(15,23,42,.5); z-index:998; }
+    #sidebarOverlay.open { display:block; }
+
+    /* ── MOBILE BOTTOM NAV ── */
+    #mobileNav {
+      display:none; position:fixed; bottom:0; left:0; right:0; z-index:997;
+      background:var(--surface); border-top:1px solid var(--border);
+      padding:6px 0 env(safe-area-inset-bottom, 6px);
+    }
+    #mobileNav .mnav-item {
+      display:flex; flex-direction:column; align-items:center; gap:2px;
+      padding:6px 4px; border-radius:8px; cursor:pointer; color:var(--text-muted);
+      font-size:10px; font-weight:500; transition:color .15s; flex:1; border:none; background:none;
+    }
+    #mobileNav .mnav-item.active { color:var(--accent); }
+    #mobileNav .mnav-item svg { flex-shrink:0; }
+
+    /* ── MOBILE TOPBAR ── */
+    #mobileTopbar {
+      display:none; position:sticky; top:0; z-index:996;
+      background:var(--surface); border-bottom:1px solid var(--border);
+      padding:10px 14px; align-items:center; justify-content:space-between;
+    }
+
+    /* ── POS MOBILE: stack product grid + cart vertically ── */
+    @media (max-width: 767px) {
+      html, body { overflow:auto !important; height:auto !important; }
+      #app { flex-direction:column !important; height:auto !important; overflow:auto !important; }
+      #sidebar { display:none !important; }
+      #sidebar.mobile-open { 
+        display:flex !important; position:fixed; top:0; left:0; bottom:0; 
+        width:260px !important; min-width:260px !important; z-index:999;
+        box-shadow:4px 0 24px rgba(0,0,0,.15);
+        overflow-y:auto;
+      }
+      #mobileNav { display:flex; }
+      #mobileTopbar { display:flex; }
+      main { flex-direction:column !important; height:auto !important; overflow:visible !important; padding-bottom:70px; }
+      
+      /* POS view on mobile: stack vertically */
+      #view-pos { flex-direction:column !important; overflow:visible !important; height:auto !important; }
+      #view-pos > div:first-child { overflow:visible !important; height:auto !important; min-height:0; }
+      #productGrid { overflow:visible !important; height:auto !important; max-height:none !important; }
+      #cartPanel { width:100% !important; border-left:none !important; border-top:1px solid var(--border); height:auto !important; }
+      
+      /* All view sections */
+      .view-section { overflow:visible !important; height:auto !important; padding:12px !important; padding-bottom:80px !important; }
+      
+      /* Tables: horizontal scroll */
+      .card .overflow-auto, .card .overflow-hidden { overflow-x:auto !important; }
+      table { min-width:600px; }
+      
+      /* KPI grids: 2 cols on mobile */
+      #invKpis, #salesKpis, #reportKpis { grid-template-columns:repeat(2,1fr) !important; }
+      #expKpis { grid-template-columns:repeat(2,1fr) !important; }
+
+      /* Reports 2-col grid: single col */
+      #view-reports .grid-cols-2 { grid-template-columns:1fr !important; }
+
+      /* Modals: full width on mobile */
+      .modal-overlay > .card { width:95vw !important; max-width:95vw !important; margin:8px; max-height:90vh; overflow-y:auto; }
+      
+      /* Cart panel compact */
+      #cartPanel > div:first-child { padding:10px 12px !important; }
+      #discountRow { flex-wrap:wrap; gap:6px; }
+      
+      /* Login page */
+      #loginPage > div { padding:0 12px; }
+
+      /* Hide collapse button on mobile */
+      #sidebarToggleBtn { display:none; }
+
+      /* Topbar title */
+      .mobile-view-title { font-size:15px; font-weight:700; color:var(--text-head); }
+    }
+
+    /* ── TABLET (768px - 1023px) ── */
+    @media (min-width:768px) and (max-width:1023px) {
+      #sidebar { width:60px !important; min-width:60px !important; }
+      #sidebar .nav-label, #sidebar .brand-text, #sidebar #syncLabel { display:none !important; }
+      #sidebar .nav-link { justify-content:center !important; }
+      #sidebar #userAvatar { margin:0 auto; }
+      #sidebar > div:first-child { justify-content:center; padding:12px 8px; }
+      #sidebar .nav-link span { display:none; }
+      #sidebar .px-3.py-3.border-t button span { display:none; }
+      #sidebar .px-3.py-3.border-t button { padding:6px !important; justify-content:center; }
+      #cartPanel { width:260px !important; }
+      #invKpis, #salesKpis, #reportKpis { grid-template-columns:repeat(2,1fr) !important; }
+      #view-reports .grid-cols-2 { grid-template-columns:1fr !important; }
+    }
+
+    /* ── LARGE DESKTOP (1280px+): wider cart ── */
+    @media (min-width:1280px) {
+      #cartPanel { width:340px !important; }
+    }
+  </style>
+</head>
+<body class="h-full overflow-hidden">
+
+<!-- ── MOBILE TOPBAR ─────────────────────────────── -->
+<div id="mobileTopbar">
+  <button onclick="openMobileSidebar()" style="background:none;border:none;cursor:pointer;padding:4px;color:var(--text-body)">
+    <svg width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="flex items-center gap-2">
+    <div class="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-bold" style="background:#0EA5E9">PC</div>
+    <span class="mobile-view-title" id="mobileViewTitle">Point of Sale</span>
+  </div>
+  <div id="mobileUserAvatar" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold" style="background:#0EA5E9">?</div>
+</div>
+
+<!-- ── SIDEBAR OVERLAY ───────────────────────────── -->
+<div id="sidebarOverlay" onclick="closeMobileSidebar()"></div>
+
+<!-- ── MOBILE BOTTOM NAV ─────────────────────────── -->
+<div id="mobileNav">
+  <button class="mnav-item active" data-view="pos" onclick="mobileNavClick('pos',this)">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+    POS
+  </button>
+  <button class="mnav-item" data-view="inventory" onclick="mobileNavClick('inventory',this)" data-roles="admin,manager">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    Stock
+  </button>
+  <button class="mnav-item" data-view="sales" onclick="mobileNavClick('sales',this)" data-roles="admin,manager">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Sales
+  </button>
+  <button class="mnav-item" data-view="reports" onclick="mobileNavClick('reports',this)" data-roles="admin,manager">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M8 8h4M8 16h6"/></svg>
+    Reports
+  </button>
+  <button class="mnav-item" data-view="expenses" onclick="mobileNavClick('expenses',this)" data-roles="admin,manager">
+    <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+    Expenses
+  </button>
+</div>
+
+
+<!-- ═══════════════════════════════ LOGIN PAGE ═══════════════════ -->
+<div id="loginPage" class="fixed inset-0 z-[9999] flex items-center justify-center" style="background:var(--canvas)">
+  <div style="width:100%;max-width:420px;padding:0 16px">
+    <!-- Brand Header -->
+    <div class="flex flex-col items-center mb-8">
+      <div class="w-14 h-14 rounded-2xl flex items-center justify-center text-white text-2xl font-bold mb-3" style="background:#0EA5E9;box-shadow:0 8px 24px rgba(14,165,233,0.35)">PC</div>
+      <h1 class="text-2xl font-bold text-[#0F172A] tracking-tight">PrimeCosmetics</h1>
+      <p class="text-sm text-[#64748B] mt-1">Point of Sale System — Please sign in</p>
+    </div>
+    <!-- Login Card -->
+    <div class="card p-6" style="box-shadow:0 8px 32px rgba(0,0,0,0.08)">
+      <div id="loginError" class="hidden mb-4 px-3 py-2.5 rounded-lg text-sm font-medium" style="background:var(--danger-bg);color:var(--danger-fg)"></div>
+      <div class="space-y-4">
+        <div>
+          <label class="label-xs block mb-1.5">Email Address</label>
+          <input id="loginEmail" type="email" class="input" placeholder="admin@primecosmetics.com" autocomplete="email" />
+        </div>
+        <div>
+          <label class="label-xs block mb-1.5">Password</label>
+          <div class="relative">
+            <input id="loginPassword" type="password" class="input pr-10" placeholder="Enter your password" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()" />
+            <button type="button" onclick="togglePasswordVisibility()" class="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] hover:text-[#334155]" style="background:none;border:none;cursor:pointer;padding:0">
+              <svg id="eyeIcon" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            </button>
+          </div>
+        </div>
+        <button onclick="doLogin()" id="loginBtn" class="btn-primary w-full py-2.5 text-sm flex items-center justify-center gap-2">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg>
+          Sign In
+        </button>
+      </div>
+    </div>
+    <p class="text-center text-xs text-[#94A3B8] mt-4">Contact your administrator to get access</p>
+  </div>
+</div>
+
+
+<div id="app" style="display:none" class="flex h-screen overflow-hidden">
+
+  <!-- ── SIDEBAR ─────────────────────────────────────── -->
+  <aside id="sidebar" class="flex flex-col bg-white border-r border-[#E2E8F0] transition-all duration-200" style="width:220px;min-width:220px">
+    <!-- Brand -->
+    <div class="flex items-center gap-3 px-4 py-4 border-b border-[#E2E8F0]">
+      <div class="w-8 h-8 rounded-lg flex items-center justify-center text-white text-sm font-bold flex-shrink-0" style="background:#0EA5E9">PC</div>
+      <span class="brand-text font-bold text-[#0F172A] text-lg tracking-tight">PrimeCosmetics</span>
+      <button id="mobileSidebarClose" onclick="closeMobileSidebar()" style="display:none;margin-left:auto;background:none;border:none;cursor:pointer;color:var(--text-muted);padding:2px">
+        <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+      </button>
+    </div>
+    <!-- User Info -->
+    <div class="px-3 py-3 border-b border-[#E2E8F0]">
+      <div class="flex items-center gap-2">
+        <div id="userAvatar" class="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0" style="background:#0EA5E9">?</div>
+        <div class="flex-1 min-w-0 nav-label">
+          <div id="userDisplayName" class="text-xs font-semibold text-[#0F172A] truncate">Loading...</div>
+          <div id="userRoleBadge" class="text-[10px] text-[#64748B]">—</div>
+        </div>
+      </div>
+    </div>
+    <!-- Nav -->
+    <nav id="navMenu" class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+      <div class="nav-link active" data-view="pos" onclick="switchView('pos',this)">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span class="nav-label">Point of Sale</span>
+      </div>
+      <div class="nav-link" data-view="inventory" onclick="switchView('inventory',this)" data-roles="admin,manager">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        <span class="nav-label">Inventory</span>
+      </div>
+      <div class="nav-link" data-view="sales" onclick="switchView('sales',this)" data-roles="admin,manager">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+        <span class="nav-label">Sales Log</span>
+      </div>
+      <div class="nav-link" data-view="expenses" onclick="switchView('expenses',this)" data-roles="admin,manager">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+        <span class="nav-label">Expenses</span>
+      </div>
+      <div class="nav-link" data-view="reports" onclick="switchView('reports',this)" data-roles="admin,manager">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 12h8M8 8h4M8 16h6"/></svg>
+        <span class="nav-label">Reports</span>
+      </div>
+      <div class="nav-link" data-view="audit" onclick="switchView('audit',this)" data-roles="admin">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M9 11l3 3L22 4M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+        <span class="nav-label">Audit Logs</span>
+      </div>
+      <div class="nav-link" data-view="users" onclick="switchView('users',this)" data-roles="admin">
+        <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87M16 3.13a4 4 0 010 7.75"/></svg>
+        <span class="nav-label">User Management</span>
+      </div>
+    </nav>
+    
+    <div class="px-3 py-3 border-t border-[#E2E8F0] space-y-2">
+      <div class="flex items-center gap-2 text-xs text-[#64748B]">
+        <div class="sync-dot" id="syncDot"></div>
+        <span id="syncLabel" class="nav-label">Synced</span>
+      </div>
+      <button class="btn-ghost w-full text-xs py-1.5 nav-label" onclick="openShiftEnd()">🔒 End Shift (Z-Report)</button>
+      <button onclick="doLogout()" class="btn-danger w-full text-xs py-1.5 nav-label">⏻ Sign Out</button>
+      <button id="sidebarToggleBtn" onclick="toggleSidebar()" class="w-full flex items-center justify-center gap-1 text-[10px] text-[#64748B] hover:text-[#0EA5E9] py-1">
+        <svg id="sidebarToggleIcon" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg>
+        <span class="nav-label text-[10px]">Collapse</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── MAIN AREA ────────────────────────────────────── -->
+  <main class="flex-1 flex overflow-hidden">
+
+    <!-- ══ VIEW: POS ══════════════════════════════════ -->
+    <section id="view-pos" class="flex-1 flex overflow-hidden view-section">
+      <!-- Product Panel -->
+      <div class="flex-1 flex flex-col overflow-hidden p-4 gap-3">
+        <!-- Top bar -->
+        <div class="flex items-center gap-3">
+          <div class="relative flex-1">
+            <svg class="absolute left-3 top-1/2 -translate-y-1/2 text-[#64748B]" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input id="productSearch" class="input pl-9 py-2 text-sm" placeholder="Search cosmetics or scan barcode…" oninput="filterProducts(this.value)" />
+          </div>
+          <div class="flex gap-1 bg-white border border-[#E2E8F0] rounded-lg p-1">
+            <span class="text-[10px] text-[#64748B] my-auto px-1">UOM:</span>
+            <select id="uomFilter" class="text-xs border-none outline-none bg-transparent text-[#334155]" onchange="filterProducts(document.getElementById('productSearch').value)">
+              <option value="">All</option>
+              <option value="Piece">Piece</option>
+              <option value="Box">Box</option>
+              <option value="Pack">Pack</option>
+              <option value="Bottle">Bottle</option>
+              <option value="Tube">Tube</option>
+            </select>
+          </div>
+        </div>
+        <!-- Category Tabs -->
+        <div class="flex items-center gap-1 overflow-x-auto pb-1" id="categoryTabs"></div>
+        <!-- Product Grid -->
+        <div id="productGrid" class="flex-1 overflow-y-auto grid gap-2" style="grid-template-columns:repeat(auto-fill,minmax(140px,1fr));align-content:start"></div>
+      </div>
+      <!-- Cart Panel -->
+      <div class="w-80 flex flex-col bg-white border-l border-[#E2E8F0]" id="cartPanel">
+        <div class="p-4 border-b border-[#E2E8F0] flex items-center justify-between">
+          <div>
+            <h2 class="font-bold text-[#0F172A] text-sm">Current Bill</h2>
+            <p class="text-xs text-[#64748B]" id="cartMeta">0 items · ₨ 0.00</p>
+          </div>
+          <div class="flex gap-1">
+            <button class="btn-ghost text-xs py-1 px-2" onclick="holdCart()" title="F4 – Hold Cart">📌 Hold</button>
+            <button class="btn-danger text-xs py-1 px-2" onclick="voidCart()" title="Void entire bill">✕ Void</button>
+          </div>
+        </div>
+        <!-- Held Carts -->
+        <div id="heldCarts" class="hidden px-3 py-2 border-b border-[#E2E8F0] bg-[#FEF3C7]">
+          <p class="text-xs font-600 text-[#D97706] mb-1">Held Transactions</p>
+          <div id="heldCartList" class="space-y-1"></div>
+        </div>
+        <!-- Cart Items -->
+        <div id="cartItems" class="flex-1 overflow-y-auto px-3 py-2 space-y-0"></div>
+        <!-- Discount & Tax -->
+        <div class="px-3 py-2 border-t border-[#E2E8F0] space-y-2">
+          <div class="flex gap-2 items-center" id="discountRow">
+            <div class="flex-1">
+              <label class="text-[10px] font-700 text-[#64748B] uppercase mb-0.5 block">Discount <span class="kbd">F8</span></label>
+              <input id="discountVal" type="number" min="0" class="input text-xs py-1.5" placeholder="0" oninput="recalcCart()" />
+            </div>
+            <div>
+              <label class="text-[10px] font-700 text-[#64748B] uppercase mb-0.5 block">Type</label>
+              <select id="discountType" class="input text-xs py-1.5" onchange="recalcCart()" style="width:70px">
+                <option value="flat">Flat</option>
+                <option value="pct">%</option>
+              </select>
+            </div>
+            <div class="flex-1">
+              <label class="text-[10px] font-700 text-[#64748B] uppercase mb-0.5 block">Tax %</label>
+              <input id="taxPct" type="number" min="0" max="100" value="0" class="input text-xs py-1.5" oninput="recalcCart()" />
+            </div>
+          </div>
+          <!-- Totals -->
+          <div class="space-y-1 text-xs">
+            <div class="flex justify-between text-[#64748B]"><span>Subtotal</span><span id="subtotalDisp" class="mono">₨ 0.00</span></div>
+            <div class="flex justify-between text-[#D97706]"><span>Discount</span><span id="discountDisp" class="mono">₨ 0.00</span></div>
+            <div class="flex justify-between text-[#64748B]"><span>Tax</span><span id="taxDisp" class="mono">₨ 0.00</span></div>
+            <div class="flex justify-between font-bold text-[#0F172A] text-sm border-t pt-1 mt-1 border-[#E2E8F0]"><span>TOTAL</span><span id="totalDisp" class="mono">₨ 0.00</span></div>
+          </div>
+          <!-- Payment Method -->
+          <div>
+            <label class="text-[10px] font-700 text-[#64748B] uppercase mb-1 block">Payment Method</label>
+            <div class="flex gap-1">
+              <button class="tab-btn active text-xs flex-1" data-pm="Cash" onclick="setPayment('Cash',this)">💵 Cash</button>
+              <button class="tab-btn text-xs flex-1" data-pm="Card" onclick="setPayment('Card',this)">💳 Card</button>
+              <button class="tab-btn text-xs flex-1" data-pm="JazzCash" onclick="setPayment('JazzCash',this)">📱 JazzCash</button>
+            </div>
+          </div>
+          <!-- Cash Tendered (cash only) -->
+          <div id="cashTenderedRow">
+            <label class="text-[10px] font-700 text-[#64748B] uppercase mb-0.5 block">Cash Tendered</label>
+            <input id="cashTendered" type="number" min="0" class="input text-xs py-1.5" placeholder="Enter amount received" oninput="calcChange()" />
+            <div class="flex justify-between text-xs mt-1"><span class="text-[#64748B]">Change</span><span id="changeDisp" class="mono font-bold text-[#16A34A]">₨ 0.00</span></div>
+          </div>
+        </div>
+        <!-- Checkout Button -->
+        <div class="p-3 border-t border-[#E2E8F0]">
+          <button class="btn-primary w-full py-3 text-sm flex items-center justify-center gap-2" onclick="checkout()">
+            <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+            Checkout <span class="kbd" style="background:rgba(255,255,255,.2);border-color:rgba(255,255,255,.3);color:#fff">F2</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: INVENTORY ════════════════════════════ -->
+    <section id="view-inventory" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-[#0F172A]">Inventory Management</h1>
+          <p class="text-xs text-[#64748B]">Stock levels, costing & UOM management</p>
+        </div>
+        <div class="flex gap-2">
+          <button class="btn-ghost text-xs" onclick="openAvcoCalc()">📊 AVCO Calc</button>
+          <button class="btn-ghost text-xs" onclick="openUomConv()">🔄 UOM Convert</button>
+          <button class="btn-primary text-xs" onclick="openAddProduct()">+ Add Product</button>
+        </div>
+      </div>
+      <!-- KPIs -->
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))" id="invKpis"></div>
+      <!-- Table -->
+      <div class="card flex-1 overflow-hidden flex flex-col">
+        <div class="flex items-center gap-3 p-3 border-b border-[#E2E8F0]">
+          <input id="invSearch" class="input text-xs py-2 w-64" placeholder="Search SKU, name, category…" oninput="renderInventoryTable(this.value)" />
+          <select id="invCatFilter" class="input text-xs py-2 w-40" onchange="renderInventoryTable(document.getElementById('invSearch').value)">
+            <option value="">All Categories</option>
+          </select>
+          <div class="ml-auto flex gap-1 text-xs text-[#64748B]">
+            <span id="invCount">0</span> products
+          </div>
+        </div>
+        <div class="overflow-auto flex-1" style="min-width:0">
+          <div style="overflow-x:auto;min-width:0"><table>
+            <thead>
+              <tr>
+                <th>SKU / Barcode</th><th>Product Name</th><th>Category</th><th>UOM</th>
+                <th>Stock</th><th>Reorder Lvl</th><th>Cost Price</th><th>Sale Price</th>
+                <th>Margin</th><th>Status</th><th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="invTableBody"></tbody>
+          </table></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: SALES LOG ════════════════════════════ -->
+    <section id="view-sales" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-[#0F172A]">Sales Log</h1>
+          <p class="text-xs text-[#64748B]">All completed transactions</p>
+        </div>
+        <div class="flex gap-2">
+          <input type="date" id="salesDateFilter" class="input text-xs py-1.5 w-40" oninput="renderSalesLog()" />
+          <button class="btn-ghost text-xs" onclick="exportSalesCSV()">⬇ Export CSV</button>
+        </div>
+      </div>
+      <!-- KPI strip -->
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))" id="salesKpis"></div>
+      <div class="card flex-1 overflow-auto">
+        <table>
+          <thead>
+            <tr>
+              <th>Invoice #</th><th>Date & Time</th><th>Cashier</th><th>Items</th>
+              <th>Payment</th><th>Subtotal</th><th>Discount</th><th>Tax</th>
+              <th>Total</th><th>Profit</th><th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="salesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: EXPENSES ════════════════════════════ -->
+    <section id="view-expenses" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-[#0F172A]">Expense Tracker</h1>
+          <p class="text-xs text-[#64748B]">Operational costs & overhead</p>
+        </div>
+        <button class="btn-primary text-xs" onclick="openAddExpense()">+ Log Expense</button>
+      </div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(180px,1fr))" id="expKpis"></div>
+      <div class="card flex-1 overflow-auto">
+        <table>
+          <thead>
+            <tr><th>Date</th><th>Category</th><th>Description</th><th>Amount (₨)</th><th>Logged By</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="expTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: REPORTS ══════════════════════════════ -->
+    <section id="view-reports" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-[#0F172A]">Business Reports</h1>
+          <p class="text-xs text-[#64748B]">Revenue, profit & stock valuation analytics</p>
+        </div>
+        <div class="flex gap-2">
+          <select id="reportPeriod" class="input text-xs py-1.5 w-36" onchange="renderReports()">
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month" selected>This Month</option>
+            <option value="all">All Time</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid gap-3" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))" id="reportKpis"></div>
+      <div class="grid gap-4 flex-1 overflow-auto" style="grid-template-columns:repeat(auto-fill,minmax(340px,1fr))">
+        <!-- Top Products -->
+        <div class="card p-4">
+          <h3 class="font-semibold text-sm text-[#0F172A] mb-3">Top Selling Products</h3>
+          <table>
+            <thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th><th>Profit</th></tr></thead>
+            <tbody id="topProductsBody"></tbody>
+          </table>
+        </div>
+        <!-- Category Breakdown -->
+        <div class="card p-4">
+          <h3 class="font-semibold text-sm text-[#0F172A] mb-3">Sales by Category</h3>
+          <div id="categoryBars" class="space-y-3"></div>
+        </div>
+        <!-- Expense Breakdown -->
+        <div class="card p-4">
+          <h3 class="font-semibold text-sm text-[#0F172A] mb-3">Expense Breakdown</h3>
+          <div id="expenseBars" class="space-y-3"></div>
+        </div>
+        <!-- Stock Valuation -->
+        <div class="card p-4" id="stockValCard">
+          <h3 class="font-semibold text-sm text-[#0F172A] mb-3">Stock Valuation (AVCO)</h3>
+          <div id="stockValContent"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: AUDIT LOGS ═══════════════════════════ -->
+    <section id="view-audit" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div>
+        <h1 class="text-lg font-bold text-[#0F172A]">Audit & Fraud Logs</h1>
+        <p class="text-xs text-[#64748B]">Void items, cancelled bills, and anomaly tracking</p>
+      </div>
+      <div class="card flex-1 overflow-auto">
+        <table>
+          <thead>
+            <tr><th>Timestamp</th><th>Type</th><th>Cashier ID</th><th>Invoice / Ref</th><th>Description</th><th>Amount</th><th>Synced</th></tr>
+          </thead>
+          <tbody id="auditTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ══ VIEW: USER MANAGEMENT ══════════════════════════ -->
+    <section id="view-users" class="hidden flex-1 flex-col overflow-hidden p-5 gap-4 view-section">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-lg font-bold text-[#0F172A]">User Management</h1>
+          <p class="text-xs text-[#64748B]">Add, edit and manage staff accounts</p>
+        </div>
+        <button class="btn-primary text-xs" onclick="openAddUser()">+ Add User</button>
+      </div>
+      <div class="card flex-1 overflow-auto">
+        <table>
+          <thead>
+            <tr><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th>Created</th><th>Actions</th></tr>
+          </thead>
+          <tbody id="usersTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+</div>
+
+<!-- ═══════════════════════════════ MODALS ═══════════════════ -->
+
+<!-- Add / Edit Product Modal -->
+<div id="modalProduct" class="modal-overlay hidden">
+  <div class="card w-[540px] max-h-[90vh] overflow-y-auto">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]" id="productModalTitle">Add Product</h2>
+      <button onclick="closeModal('modalProduct')" class="text-[#64748B] hover:text-[#0F172A]">✕</button>
+    </div>
+    <div class="p-4 grid grid-cols-2 gap-3">
+      <div><label class="label-xs">SKU / Barcode *</label><input id="pSku" class="input mt-1" placeholder="SKU-001" /></div>
+      <div><label class="label-xs">Product Name *</label><input id="pName" class="input mt-1" placeholder="Matte Lipstick" /></div>
+      <div><label class="label-xs">Category *</label>
+        <select id="pCategory" class="input mt-1">
+          <option>Makeup</option>
+          <option>Skincare</option>
+          <option>Haircare</option>
+          <option>Fragrances</option>
+          <option>Personal Care</option>
+          <option>Beauty Tools</option>
+          <option>Nail Care</option>
+        </select>
+      </div>
+      <div><label class="label-xs">Unit of Measure</label>
+        <select id="pUom" class="input mt-1">
+          <option>Piece</option><option>Box</option><option>Pack</option><option>Bottle</option><option>Tube</option>
+        </select>
+      </div>
+      <div><label class="label-xs">Pieces per UOM (for Pack conversion)</label><input id="pPiecesPerUom" type="number" value="1" class="input mt-1" /></div>
+      <div><label class="label-xs">Stock Quantity *</label><input id="pStock" type="number" class="input mt-1" placeholder="100" /></div>
+      <div><label class="label-xs">Reorder Level</label><input id="pReorder" type="number" class="input mt-1" placeholder="20" /></div>
+      <div><label class="label-xs">Cost Price (₨) *</label><input id="pCost" type="number" class="input mt-1" placeholder="0.00" /></div>
+      <div><label class="label-xs">Sale Price (₨) *</label><input id="pSale" type="number" class="input mt-1" placeholder="0.00" /></div>
+      <div><label class="label-xs">Supplier / Brand</label><input id="pSupplier" class="input mt-1" placeholder="Rivaj HD / Loreal" /></div>
+      <div class="col-span-2"><label class="label-xs">Description / Notes</label><textarea id="pDesc" class="input mt-1 h-16 resize-none"></textarea></div>
+    </div>
+    <div class="flex justify-end gap-2 px-4 pb-4">
+      <button class="btn-ghost" onclick="closeModal('modalProduct')">Cancel</button>
+      <button class="btn-primary" onclick="saveProduct()">Save Product</button>
+    </div>
+  </div>
+</div>
+
+<!-- AVCO Calculator Modal -->
+<div id="modalAvco" class="modal-overlay hidden">
+  <div class="card w-[460px]">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]">AVCO — Weighted Average Cost Calculator</h2>
+      <button onclick="closeModal('modalAvco')" class="text-[#64748B]">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <p class="text-xs text-[#64748B]">Enter batches of stock received. AVCO recalculates the weighted average unit cost across all batches.</p>
+      <div id="avcoBatches" class="space-y-2"></div>
+      <button class="btn-ghost w-full text-xs" onclick="addAvcoBatch()">+ Add Batch</button>
+      <div class="bg-[#E0F2FE] rounded-lg p-3 text-sm">
+        <div class="flex justify-between"><span class="text-[#64748B]">Total Units</span><span id="avcoUnits" class="mono font-bold text-[#0F172A]">0</span></div>
+        <div class="flex justify-between mt-1"><span class="text-[#64748B]">Total Cost</span><span id="avcoTotal" class="mono font-bold text-[#0F172A]">₨ 0.00</span></div>
+        <div class="flex justify-between mt-2 pt-2 border-t border-[#BAE6FD]"><span class="font-bold text-[#0EA5E9]">AVCO Unit Cost</span><span id="avcoResult" class="mono font-bold text-[#0EA5E9] text-base">₨ 0.00</span></div>
+      </div>
+    </div>
+    <div class="flex justify-end px-4 pb-4"><button class="btn-ghost" onclick="closeModal('modalAvco')">Close</button></div>
+  </div>
+</div>
+
+<!-- UOM Conversion Modal -->
+<div id="modalUom" class="modal-overlay hidden">
+  <div class="card w-[400px]">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]">UOM Conversion</h2>
+      <button onclick="closeModal('modalUom')" class="text-[#64748B]">✕</button>
+    </div>
+    <div class="p-4 space-y-3">
+      <div><label class="label-xs">Product</label>
+        <select id="uomProd" class="input mt-1" onchange="updateUomConv()"></select>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div><label class="label-xs">Packs/Boxes</label><input id="uomCartons" type="number" class="input mt-1" placeholder="0" oninput="uomCalc('carton')" /></div>
+        <div><label class="label-xs">Pieces</label><input id="uomPieces" type="number" class="input mt-1" placeholder="0" oninput="uomCalc('piece')" /></div>
+      </div>
+      <div class="bg-[#E0F2FE] rounded-lg p-3 text-xs space-y-1" id="uomDetails"></div>
+    </div>
+    <div class="flex justify-end px-4 pb-4"><button class="btn-ghost" onclick="closeModal('modalUom')">Close</button></div>
+  </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div id="modalExpense" class="modal-overlay hidden">
+  <div class="card w-[420px]">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]">Log Expense</h2>
+      <button onclick="closeModal('modalExpense')" class="text-[#64748B]">✕</button>
+    </div>
+    <div class="p-4 grid grid-cols-2 gap-3">
+      <div><label class="label-xs">Date *</label><input id="eDate" type="date" class="input mt-1" /></div>
+      <div><label class="label-xs">Category *</label>
+        <select id="eCategory" class="input mt-1">
+          <option>Rent</option><option>Utilities</option><option>Salaries</option><option>Transport</option>
+          <option>Maintenance</option><option>Marketing</option><option>Miscellaneous</option>
+        </select>
+      </div>
+      <div class="col-span-2"><label class="label-xs">Description *</label><input id="eDesc" class="input mt-1" placeholder="Monthly shop rent…" /></div>
+      <div><label class="label-xs">Amount (₨) *</label><input id="eAmount" type="number" class="input mt-1" placeholder="0.00" /></div>
+      <div><label class="label-xs">Receipt Ref.</label><input id="eRef" class="input mt-1" placeholder="RCP-001" /></div>
+    </div>
+    <div class="flex justify-end gap-2 px-4 pb-4">
+      <button class="btn-ghost" onclick="closeModal('modalExpense')">Cancel</button>
+      <button class="btn-primary" onclick="saveExpense()">Log Expense</button>
+    </div>
+  </div>
+</div>
+
+<!-- Checkout Confirm Modal -->
+<div id="modalCheckout" class="modal-overlay hidden">
+  <div class="card w-[400px]">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]">Confirm Transaction</h2>
+      <button onclick="closeModal('modalCheckout')" class="text-[#64748B]">✕</button>
+    </div>
+    <div class="p-4 space-y-3" id="checkoutSummary"></div>
+    <div class="flex justify-end gap-2 px-4 pb-4">
+      <button class="btn-ghost" onclick="closeModal('modalCheckout')">Back</button>
+      <button class="btn-primary" onclick="confirmCheckout()">✓ Confirm & Print</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add / Edit User Modal -->
+<div id="modalUser" class="modal-overlay hidden">
+  <div class="card w-[460px]">
+    <div class="flex items-center justify-between p-4 border-b border-[#E2E8F0]">
+      <h2 class="font-bold text-[#0F172A]" id="userModalTitle">Add User</h2>
+      <button onclick="closeModal('modalUser')" class="text-[#64748B] hover:text-[#0F172A]">✕</button>
+    </div>
+    <div class="p-4 grid grid-cols-2 gap-3">
+      <div class="col-span-2"><label class="label-xs">Full Name *</label><input id="uName" class="input mt-1" placeholder="Ahmed Khan" /></div>
+      <div class="col-span-2"><label class="label-xs">Email Address *</label><input id="uEmail" type="email" class="input mt-1" placeholder="ahmed@primecosmetics.com" /></div>
+      <div><label class="label-xs">Role *</label>
+        <select id="uRole" class="input mt-1">
+          <option value="manager">🛡️ Manager</option>
+          <option value="cashier">💳 Cashier</option>
+        </select>
+      </div>
+      <div><label class="label-xs">Status</label>
+        <select id="uActive" class="input mt-1">
+          <option value="true">✅ Active</option>
+          <option value="false">❌ Inactive</option>
+        </select>
+      </div>
+      <div><label class="label-xs" id="uPasswordLabel">Password *</label><input id="uPassword" type="password" class="input mt-1" placeholder="Min 6 characters" /></div>
+      <div><label class="label-xs" id="uPasswordHint" style="color:#64748B;font-size:10px;font-weight:400;text-transform:none;letter-spacing:0">Leave blank to keep existing password (edit mode)</label></div>
+    </div>
+    <div class="flex justify-end gap-2 px-4 pb-4">
+      <button class="btn-ghost" onclick="closeModal('modalUser')">Cancel</button>
+      <button class="btn-primary" onclick="saveUser()">Save User</button>
+    </div>
+  </div>
+</div>
+
+<!-- Shift End / Z-Report Overlay -->
+<div id="shiftEndOverlay" class="shift-overlay hidden">
+  <div class="card w-[480px] max-h-[90vh] overflow-y-auto">
+    <div class="p-5 border-b border-[#E2E8F0] flex items-center justify-between">
+      <div>
+        <h2 class="font-bold text-[#0F172A] text-lg">End-of-Shift Report</h2>
+        <p class="text-xs text-[#64748B]">Declare physical cash to reconcile</p>
+      </div>
+      <button onclick="closeShiftEnd()" class="text-[#64748B] text-xl">✕</button>
+    </div>
+    <div class="p-5 space-y-4">
+      <div class="grid grid-cols-2 gap-3 bg-[#F8FAFC] rounded-lg p-3 text-sm" id="shiftStats"></div>
+      <div>
+        <label class="label-xs">Physical Cash Count (₨)</label>
+        <input id="physicalCash" type="number" class="input mt-1 text-lg font-bold" placeholder="0.00" oninput="calcCashVariance()" />
+      </div>
+      <div class="bg-white rounded-lg border border-[#E2E8F0] p-3 space-y-2 text-sm" id="shiftReconcile"></div>
+      <div class="flex gap-2">
+        <button class="btn-ghost flex-1" onclick="closeShiftEnd()">Cancel</button>
+        <button class="btn-primary flex-1" onclick="submitShiftEnd()">Submit Z-Report & Lock Shift</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toastContainer" class="fixed bottom-5 right-5 z-50 space-y-2"></div>
+<div class="print-area" id="receiptPrint"></div>
+
+<style>
+  .label-xs { font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:#64748B; }
+</style>
+
+<!-- ═══════════════════════════════════════════════════════
+     JAVASCRIPT ENGINE
+════════════════════════════════════════════════════════ -->
+<script>
+'use strict';
+
+/* ── DATABASE CONFIG ──────────────────────────────────────
+   Neon PostgreSQL via Vercel Edge Function proxy
+   Update API_URL after deploying to Vercel
+─────────────────────────────────────────────────────────── */
+const API_URL = 'https://primecosmetics-api.vercel.app/api/db';
+
+async function neonQuery(sql, params = []) {
+  const res = await fetch(API_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: sql, params })
+  });
+  if (!res.ok) {
+    const txt = await res.text();
+    throw new Error('DB error: ' + txt);
+  }
+  const data = await res.json();
+  if (data.error) throw new Error(data.error);
+  return data;
+}
+
+/* ──────────────────────────────────────────────────────
+   AUTH STATE
+─────────────────────────────────────────────────────── */
+let currentUser = null; // { name, email, role }
+let currentRole = 'cashier'; // set after login
+
+/* ──────────────────────────────────────────────────────
+   TOP-LEVEL STATE (declared early to avoid hoisting issues)
+─────────────────────────────────────────────────────── */
+let activeCategory = 'All';
+let cart = [];
+let heldCarts = [];
+let paymentMethod = 'Cash';
+let pendingCheckoutData = null;
+let avcoEditIndex = null;
+let offlineQueue = JSON.parse(localStorage.getItem('nexapos_queue') || '[]');
+let isOnline = navigator.onLine;
+let editingUserEmail = null;
+let usersCache = [];
+let avcoBatches = [{ units:50, cost:450 }, { units:70, cost:430 }];
+
+/* ──────────────────────────────────────────────────────
+   LOGIN / AUTH FUNCTIONS
+─────────────────────────────────────────────────────── */
+/* SHA-256 helper for browser */
+async function sha256Browser(str) {
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(str));
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+}
+
+function offlineFallbackLogin_(email, password, errDiv) {
+  errDiv.textContent = 'Cannot connect to database. Check your internet connection.';
+  errDiv.classList.remove('hidden');
+}
+
+function togglePasswordVisibility() {
+  const input = document.getElementById('loginPassword');
+  const icon  = document.getElementById('eyeIcon');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.innerHTML = '<path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/>';
+  } else {
+    input.type = 'password';
+    icon.innerHTML = '<path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>';
+  }
+}
+
+async function doLogin() {
+  const email    = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const password = document.getElementById('loginPassword').value;
+  const errDiv   = document.getElementById('loginError');
+  const btn      = document.getElementById('loginBtn');
+
+  errDiv.classList.add('hidden');
+  if (!email || !password) {
+    errDiv.textContent = 'Please enter both email and password.';
+    errDiv.classList.remove('hidden');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="animate-spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12a9 9 0 11-6.219-8.56"/></svg> Signing in…';
+
+  try {
+    const hash = await sha256Browser(password);
+    const result = await neonQuery(
+      'SELECT id, name, email, role, active FROM users WHERE email = $1 AND password_hash = $2 LIMIT 1',
+      [email, hash]
+    );
+    const rows = result.rows || [];
+    if (rows.length === 0) {
+      errDiv.textContent = 'Invalid email or password.';
+      errDiv.classList.remove('hidden');
+    } else if (!rows[0].active) {
+      errDiv.textContent = 'Your account is deactivated. Contact administrator.';
+      errDiv.classList.remove('hidden');
+    } else {
+      currentUser = { name: rows[0].name, email: rows[0].email, role: rows[0].role };
+      currentRole = rows[0].role;
+      onLoginSuccess();
+    }
+  } catch (err) {
+    offlineFallbackLogin_(email, password, errDiv);
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = '<svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4M10 17l5-5-5-5M15 12H3"/></svg> Sign In';
+  }
+}
+
+function onLoginSuccess() {
+  // Save session to localStorage so refresh doesn't log out
+  localStorage.setItem('nexapos_session', JSON.stringify({ user: currentUser, role: currentRole }));
+
+  // Hide login page, show app
+  document.getElementById('loginPage').style.display = 'none';
+  document.getElementById('app').style.display = '';
+
+  // Update user info in sidebar
+  const initials = currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+  const roleLabels = { admin:'👑 Administrator', manager:'🛡️ Manager', cashier:'💳 Cashier' };
+  document.getElementById('userAvatar').textContent = initials;
+  document.getElementById('userDisplayName').textContent = currentUser.name;
+  document.getElementById('userRoleBadge').textContent = roleLabels[currentRole] || currentRole;
+
+  applyRolePermissions();
+  updateSyncIndicator(navigator.onLine);
+
+  // Use requestAnimationFrame to ensure app is visible in DOM before rendering
+  requestAnimationFrame(() => {
+    buildCategoryTabs();
+    filterProducts();
+    // Make sure POS view is active and visible
+    switchView('pos', document.querySelector('[data-view="pos"]'));
+    toast('Welcome, ' + currentUser.name + '!', 'success');
+    // Fetch fresh data from Google Sheet
+    fetchAllDataFromSheet();
+  });
+
+  // Update mobile topbar avatar
+  const mobileAvatar = document.getElementById('mobileUserAvatar');
+  if (mobileAvatar && currentUser) {
+    const initials = currentUser.name.split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2);
+    mobileAvatar.textContent = initials;
+  }
+  if (typeof updateMobileNavVisibility === 'function') updateMobileNavVisibility();
+}
+
+function doLogout() {
+  if (!confirm('Are you sure you want to sign out?')) return;
+  localStorage.removeItem('nexapos_session');
+  currentUser = null;
+  currentRole = 'cashier';
+  cart = [];
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginPage').style.display = '';
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').classList.add('hidden');
+}
+
+/* ──────────────────────────────────────────────────────
+   USER MANAGEMENT (Admin only)
+─────────────────────────────────────────────────────── */
+
+async function loadUsers() {
+  try {
+    const result = await neonQuery('SELECT name, email, role, active, created_at FROM users ORDER BY created_at DESC');
+    usersCache = (result.rows || []).map(r => ({
+      name: r.name, email: r.email, role: r.role,
+      active: r.active, createdAt: r.created_at ? new Date(r.created_at).toLocaleDateString() : '—'
+    }));
+    renderUsersTable();
+  } catch (err) {
+    toast('Cannot load users — ' + err.message, 'danger');
+    renderUsersTable();
+  }
+}
+
+function renderUsersTable() {
+  const body = document.getElementById('usersTableBody');
+  if (!usersCache.length) {
+    body.innerHTML = '<tr><td colspan="6" class="text-center py-6 text-[#64748B]">No users found</td></tr>';
+    return;
+  }
+  const roleLabels = { admin:'👑 Administrator', manager:'🛡️ Manager', cashier:'💳 Cashier' };
+  body.innerHTML = usersCache.map(u => `
+    <tr>
+      <td class="font-medium text-[#0F172A]">${u.name}</td>
+      <td class="text-xs text-[#64748B]">${u.email}</td>
+      <td><span class="badge badge-info text-[10px]">${roleLabels[u.role]||u.role}</span></td>
+      <td><span class="badge ${u.active==='true'||u.active===true?'badge-success':'badge-danger'}">${u.active==='true'||u.active===true?'Active':'Inactive'}</span></td>
+      <td class="text-xs text-[#64748B]">${u.createdAt||'—'}</td>
+      <td>
+        <div class="flex gap-1">
+          ${u.role!=='admin'?`<button onclick="openEditUser('${u.email}')" class="text-[#0EA5E9] hover:underline text-xs">Edit</button>`:'<span class="text-xs text-[#94A3B8]">Protected</span>'}
+          ${u.role!=='admin'?`<button onclick="deleteUser('${u.email}')" class="text-[#DC2626] hover:underline text-xs">Del</button>`:''}
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+function openAddUser() {
+  editingUserEmail = null;
+  document.getElementById('uName').value = '';
+  document.getElementById('uEmail').value = '';
+  document.getElementById('uEmail').disabled = false;
+  document.getElementById('uRole').value = 'cashier';
+  document.getElementById('uActive').value = 'true';
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uPasswordLabel').textContent = 'Password *';
+  document.getElementById('uPasswordHint').style.display = 'none';
+  document.getElementById('userModalTitle').textContent = 'Add User';
+  openModal('modalUser');
+}
+
+function openEditUser(email) {
+  const u = usersCache.find(x=>x.email===email);
+  if (!u) return;
+  editingUserEmail = email;
+  document.getElementById('uName').value = u.name;
+  document.getElementById('uEmail').value = u.email;
+  document.getElementById('uEmail').disabled = true;
+  document.getElementById('uRole').value = u.role;
+  document.getElementById('uActive').value = String(u.active);
+  document.getElementById('uPassword').value = '';
+  document.getElementById('uPasswordLabel').textContent = 'New Password';
+  document.getElementById('uPasswordHint').style.display = '';
+  document.getElementById('userModalTitle').textContent = 'Edit User';
+  openModal('modalUser');
+}
+
+async function saveUser() {
+  const name     = document.getElementById('uName').value.trim();
+  const email    = document.getElementById('uEmail').value.trim().toLowerCase();
+  const role     = document.getElementById('uRole').value;
+  const active   = document.getElementById('uActive').value;
+  const password = document.getElementById('uPassword').value;
+
+  if (!name || !email) { toast('Name and email are required', 'warn'); return; }
+  if (!editingUserEmail && !password) { toast('Password is required for new users', 'warn'); return; }
+  if (password && password.length < 6) { toast('Password must be at least 6 characters', 'warn'); return; }
+
+  try {
+    if (editingUserEmail) {
+      // UPDATE existing user
+      let sql = 'UPDATE users SET name=$1, role=$2, active=$3';
+      let params = [name, role, active === 'true'];
+      if (password) {
+        const hash = await sha256Browser(password);
+        sql += ', password_hash=$4 WHERE email=$5';
+        params.push(hash, editingUserEmail);
+      } else {
+        sql += ' WHERE email=$4';
+        params.push(editingUserEmail);
+      }
+      await neonQuery(sql, params);
+      toast('User updated', 'success');
+    } else {
+      // INSERT new user
+      const hash = await sha256Browser(password);
+      await neonQuery(
+        'INSERT INTO users (name, email, password_hash, role, active) VALUES ($1,$2,$3,$4,$5)',
+        [name, email, hash, role, true]
+      );
+      toast('User added successfully', 'success');
+    }
+    closeModal('modalUser');
+    loadUsers();
+  } catch (err) {
+    if (err.message.includes('unique') || err.message.includes('duplicate')) {
+      toast('Email already exists', 'danger');
+    } else {
+      toast('Error: ' + err.message, 'danger');
+    }
+  }
+}
+
+async function deleteUser(email) {
+  if (!confirm('Delete user: ' + email + '?')) return;
+  try {
+    await neonQuery('DELETE FROM users WHERE email=$1 AND role != $2', [email, 'admin']);
+    toast('User deleted', 'success');
+    loadUsers();
+  } catch (err) {
+    toast('Error: ' + err.message, 'danger');
+  }
+}
+
+let currentView = 'pos';
+let sidebarOpen = true;
+
+/* ──────────────────────────────────────────────────────
+   MOCK DATA — Updated for Cosmetics Shop
+─────────────────────────────────────────────────────── */
+let inventory = [
+  { id:'SKU-001', barcode:'5000456789012', name:'Matte Lipstick Crimson Red', category:'Makeup', uom:'Piece', piecesPerUom:1, stock:120, reorder:20, cost:450, sale:750, supplier:'Rivaj Cosmetics', desc:'Long-lasting matte finish' },
+  { id:'SKU-002', barcode:'5000456789013', name:'Liquid Foundation Beige 02', category:'Makeup', uom:'Bottle', piecesPerUom:1, stock:85, reorder:15, cost:1100, sale:1650, supplier:'Loreal Pakistan', desc:'Full coverage 30ml pump' },
+  { id:'SKU-003', barcode:'5000456789014', name:'Hyaluronic Acid Serum', category:'Skincare', uom:'Bottle', piecesPerUom:1, stock:60, reorder:10, cost:1400, sale:2100, supplier:'The Ordinary', desc:'Hydrating face serum 30ml' },
+  { id:'SKU-004', barcode:'5000456789015', name:'Waterproof Mascara Black', category:'Makeup', uom:'Piece', piecesPerUom:1, stock:95, reorder:15, cost:600, sale:950, supplier:'Maybelline', desc:'Volume express smudge-proof' },
+  { id:'SKU-005', barcode:'5000456789016', name:'Argan Oil Hair Mask', category:'Haircare', uom:'Tub', piecesPerUom:1, stock:40, reorder:8, cost:850, sale:1350, supplier:'Sunsilk Professional', desc:'Deep conditioning treatment 250g' },
+  { id:'SKU-006', barcode:'5000456789017', name:'Oud Wood Parfum 100ml', category:'Fragrances', uom:'Bottle', piecesPerUom:1, stock:25, reorder:5, cost:3500, sale:5500, supplier:'J. Fragrances', desc:'Premium long-lasting scent' },
+  { id:'SKU-007', barcode:'5000456789018', name:'Micellar Cleansing Water', category:'Skincare', uom:'Bottle', piecesPerUom:1, stock:70, reorder:12, cost:550, sale:850, supplier:'Garnier', desc:'400ml makeup remover' },
+  { id:'SKU-008', barcode:'5000456789019', name:'Gel Nail Polish Nude Pink', category:'Nail Care', uom:'Piece', piecesPerUom:1, stock:150, reorder:30, cost:180, sale:320, supplier:'Sweet Touch', desc:'High-gloss finish 15ml' },
+  { id:'SKU-009', barcode:'5000456789020', name:'Blending Sponge Set', category:'Beauty Tools', uom:'Pack', piecesPerUom:3, stock:50, reorder:10, cost:250, sale:450, supplier:'Retail Sourcing', desc:'3-pack latex free sponges' }
+];
+
+let salesLog = [
+  { invoice:'INV-0001', date:'2026-05-28 11:14', cashier:'Ahmed K.', items:[{name:'Matte Lipstick Crimson Red',qty:2,sale:750,cost:450}], payment:'Cash', subtotal:1500, discount:0, tax:0, total:1500, profit:600, status:'Completed' },
+  { invoice:'INV-0002', date:'2026-05-29 15:45', cashier:'Fatima R.', items:[{name:'Liquid Foundation Beige 02',qty:1,sale:1650,cost:1100},{name:'Micellar Cleansing Water',qty:1,sale:850,cost:550}], payment:'Card', subtotal:2500, discount:100, tax:0, total:2400, profit:750, status:'Completed' }
+];
+
+let expenses = [
+  { id:'EXP-001', date:'2026-05-01', category:'Rent', desc:'Cosmetics Shop Monthly Rent', amount:55000, ref:'RCP-701', loggedBy:'Admin' },
+  { id:'EXP-002', date:'2026-05-05', category:'Marketing', desc:'Instagram & Facebook Sponsored Ads', amount:12000, ref:'RCP-702', loggedBy:'Admin' }
+];
+
+let auditLogs = [
+  { ts:'2026-05-30 12:12', type:'Void Item', cashier:'Ahmed K.', ref:'INV-DRAFT-001', desc:'Customer cancelled Oud Wood Perfume before billing', amount:5500, synced:true }
+];
+
+let shiftData = { startTime: new Date().toISOString(), cashSales:0, cardSales:0, jazzSales:0, transactions:0 };
+
+/* ──────────────────────────────────────────────────────
+   SYNC ENGINE
+─────────────────────────────────────────────────────── */
+/* ──────────────────────────────────────────────────────
+   NEON DATABASE — ALL DATA OPERATIONS
+─────────────────────────────────────────────────────── */
+
+// ── RECORD SALE ──────────────────────────────────────
+async function syncToGoogleSheets(action, payload) {
+  // Now routes to Neon instead of Google Sheets
+  try {
+    if (action === 'recordSale') {
+      await neonQuery(
+        `INSERT INTO sales_log (invoice, sale_date, cashier, items, payment_method, subtotal, discount, tax, total, profit, voided)
+         VALUES ($1, NOW(), $2, $3, $4, $5, $6, $7, $8, $9, false)
+         ON CONFLICT (invoice) DO NOTHING`,
+        [
+          payload.invoice,
+          payload.cashier,
+          JSON.stringify(payload.items),
+          payload.payment,
+          Number(payload.subtotal) || 0,
+          Number(payload.disc) || 0,
+          Number(payload.tax) || 0,
+          Number(payload.total) || 0,
+          Number(payload.profit) || 0
+        ]
+      );
+      // Update stock for each sold item
+      for (const item of payload.items) {
+        await neonQuery(
+          'UPDATE inventory SET stock = stock - $1, last_updated = NOW() WHERE id = $2',
+          [Number(item.qty), item.id]
+        );
+      }
+    } else if (action === 'logExpense') {
+      await neonQuery(
+        'INSERT INTO expenses (id, expense_date, category, description, amount, paid_by) VALUES ($1, $2, $3, $4, $5, $6) ON CONFLICT (id) DO NOTHING',
+        [payload.id, payload.date, payload.category, payload.desc, Number(payload.amount), payload.paidBy || '']
+      );
+    } else if (action === 'updateInventory') {
+      const p = payload;
+      await neonQuery(
+        `INSERT INTO inventory (id, barcode, name, category, uom, pieces_per_uom, stock, reorder_level, cost_price, sale_price, supplier, description, last_updated)
+         VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,NOW())
+         ON CONFLICT (id) DO UPDATE SET
+           barcode=$2, name=$3, category=$4, uom=$5, pieces_per_uom=$6,
+           stock=$7, reorder_level=$8, cost_price=$9, sale_price=$10,
+           supplier=$11, description=$12, last_updated=NOW()`,
+        [p.id, p.barcode||'', p.name, p.category||'Uncategorized', p.uom||'Piece',
+         Number(p.piecesPerUom)||1, Number(p.stock)||0, Number(p.reorder)||0,
+         Number(p.cost)||0, Number(p.sale)||0, p.supplier||'', p.desc||'']
+      );
+    } else if (action === 'auditVoid') {
+      await neonQuery(
+        'UPDATE sales_log SET voided=true, void_reason=$1 WHERE invoice=$2',
+        [payload.reason || 'Voided by ' + (currentUser?.name || 'admin'), payload.invoice]
+      );
+      await neonQuery(
+        'INSERT INTO audit_logs (log_time, action, user_name, details, reference) VALUES (NOW(), $1, $2, $3, $4)',
+        ['VOID', currentUser?.name || 'admin', 'Invoice voided: ' + payload.invoice, payload.invoice]
+      );
+      // Restore stock
+      if (payload.items) {
+        for (const item of payload.items) {
+          await neonQuery(
+            'UPDATE inventory SET stock = stock + $1 WHERE id = $2',
+            [Number(item.qty), item.id]
+          );
+        }
+      }
+    } else if (action === 'zReport') {
+      await neonQuery(
+        'INSERT INTO audit_logs (log_time, action, user_name, details, reference) VALUES (NOW(), $1, $2, $3, $4)',
+        ['Z_REPORT', currentUser?.name || 'admin', JSON.stringify(payload), 'SHIFT_END']
+      );
+    }
+    updateSyncIndicator(true);
+    return { status: 'success' };
+  } catch (err) {
+    console.error('Neon sync error:', err);
+    // Save to offline queue
+    offlineQueue.push({ action, payload });
+    localStorage.setItem('nexapos_queue', JSON.stringify(offlineQueue));
+    updateSyncIndicator(false);
+    return { status: 'queued', message: err.message };
+  }
+}
+
+// ── FETCH ALL DATA ON LOGIN ───────────────────────────
+async function fetchAllDataFromSheet() {
+  toast('Loading data from Neon DB…', 'info');
+  try {
+    // Parallel fetch for maximum speed
+    const [invResult, salesResult, expResult] = await Promise.all([
+      neonQuery('SELECT id, barcode, name, category, uom, pieces_per_uom, stock, reorder_level, cost_price, sale_price, supplier, description FROM inventory ORDER BY name'),
+      neonQuery('SELECT invoice, sale_date, cashier, items, payment_method, subtotal, discount, tax, total, profit, voided FROM sales_log ORDER BY sale_date DESC LIMIT 500'),
+      neonQuery('SELECT id, expense_date, category, description, amount, paid_by FROM expenses ORDER BY expense_date DESC LIMIT 500')
+    ]);
+
+    // Map inventory
+    if (invResult.rows && invResult.rows.length > 0) {
+      inventory = invResult.rows.map(r => ({
+        id:           String(r.id || ''),
+        barcode:      String(r.barcode || ''),
+        name:         String(r.name || ''),
+        category:     String(r.category || 'Uncategorized'),
+        uom:          String(r.uom || 'Piece'),
+        piecesPerUom: Number(r.pieces_per_uom || 1),
+        stock:        Number(r.stock || 0),
+        reorder:      Number(r.reorder_level || 0),
+        cost:         Number(r.cost_price || 0),
+        sale:         Number(r.sale_price || 0),
+        supplier:     String(r.supplier || ''),
+        desc:         String(r.description || '')
+      }));
+      toast('✓ ' + inventory.length + ' products loaded', 'success');
+    }
+
+    // Map sales log
+    if (salesResult.rows && salesResult.rows.length > 0) {
+      salesLog = salesResult.rows.map(r => ({
+        invoice:  String(r.invoice || ''),
+        date:     r.sale_date ? new Date(r.sale_date).toLocaleString() : '',
+        cashier:  String(r.cashier || ''),
+        items:    Array.isArray(r.items) ? r.items : [],
+        payment:  String(r.payment_method || 'Cash'),
+        subtotal: Number(r.subtotal || 0),
+        disc:     Number(r.discount || 0),
+        tax:      Number(r.tax || 0),
+        total:    Number(r.total || 0),
+        profit:   Number(r.profit || 0),
+        voided:   r.voided === true
+      }));
+    }
+
+    // Map expenses
+    if (expResult.rows && expResult.rows.length > 0) {
+      expenses = expResult.rows.map(r => ({
+        id:       String(r.id || ''),
+        date:     r.expense_date ? String(r.expense_date).slice(0,10) : '',
+        category: String(r.category || ''),
+        desc:     String(r.description || ''),
+        amount:   Number(r.amount || 0),
+        paidBy:   String(r.paid_by || '')
+      }));
+    }
+
+    buildCategoryTabs();
+    filterProducts();
+    updateSyncIndicator(true);
+
+  } catch (err) {
+    console.error('Neon fetch error:', err);
+    toast('DB error: ' + err.message, 'danger');
+  }
+}
+
+// ── OFFLINE QUEUE FLUSH ───────────────────────────────
+async function flushOfflineQueue() {
+  if (!offlineQueue.length) return;
+  const copy = [...offlineQueue];
+  offlineQueue = [];
+  localStorage.setItem('nexapos_queue', JSON.stringify([]));
+  for (const item of copy) {
+    try {
+      await syncToGoogleSheets(item.action, item.payload);
+    } catch {
+      offlineQueue.push(item);
+    }
+  }
+  if (offlineQueue.length) localStorage.setItem('nexapos_queue', JSON.stringify(offlineQueue));
+}
+
+function updateSyncIndicator(online) {
+  isOnline = online;
+  const dot = document.getElementById('syncDot');
+  const lbl = document.getElementById('syncLabel');
+  if (dot) dot.className = 'sync-dot' + (online ? '' : ' offline');
+  if (lbl) lbl.textContent = online ? 'Synced' : `Offline (${offlineQueue.length} queued)`;
+}
+
+window.addEventListener('online', () => { updateSyncIndicator(true); flushOfflineQueue(); });
+window.addEventListener('offline', () => updateSyncIndicator(false));
+
+/* ──────────────────────────────────────────────────────
+   ROLE MANAGEMENT
+─────────────────────────────────────────────────────── */
+// roleSwitcher removed — role is now set at login
+
+function applyRolePermissions() {
+  document.querySelectorAll('[data-roles]').forEach(el => {
+    const allowed = el.getAttribute('data-roles').split(',');
+    el.style.display = allowed.includes(currentRole) ? '' : 'none';
+  });
+  if (currentRole === 'cashier') {
+    switchView('pos', document.querySelector('[data-view="pos"]'));
+    document.querySelectorAll('.cashier-hidden').forEach(el => el.classList.add('hidden'));
+  } else {
+    document.querySelectorAll('.cashier-hidden').forEach(el => el.classList.remove('hidden'));
+  }
+  document.querySelectorAll('.admin-only').forEach(el => {
+    el.style.display = currentRole === 'admin' ? '' : 'none';
+  });
+  // Also update mobile bottom nav visibility
+  if (typeof updateMobileNavVisibility === 'function') updateMobileNavVisibility();
+}
+
+/* ──────────────────────────────────────────────────────
+   VIEW SWITCHING
+─────────────────────────────────────────────────────── */
+function switchView(view, el) {
+  if (currentRole === 'cashier' && view !== 'pos') {
+    toast('Cashiers can only access Point of Sale', 'warn'); return;
+  }
+  if (currentRole !== 'admin' && view === 'users') {
+    toast('Only administrators can manage users', 'warn'); return;
+  }
+  currentView = view;
+  document.querySelectorAll('.view-section').forEach(s => s.classList.add('hidden'));
+  document.getElementById('view-' + view).classList.remove('hidden');
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  if (el) el.classList.add('active');
+
+  if (view === 'pos')       { buildCategoryTabs(); filterProducts(document.getElementById('productSearch') ? document.getElementById('productSearch').value : ''); }
+  if (view === 'inventory') { renderInventoryKpis(); renderInventoryTable(); populateCategoryFilter(); }
+  if (view === 'sales')     { renderSalesLog(); renderSalesKpis(); }
+  if (view === 'expenses')  { renderExpenses(); renderExpKpis(); }
+  if (view === 'reports')   renderReports();
+  if (view === 'audit')     renderAuditLogs();
+  if (view === 'users')     loadUsers();
+
+  // Mobile: close sidebar drawer, update topbar title, sync bottom nav
+  if (typeof closeMobileSidebar === 'function' && window.innerWidth < 768) closeMobileSidebar();
+  const _titleEl = document.getElementById('mobileViewTitle');
+  if (_titleEl && typeof MOBILE_VIEW_TITLES !== 'undefined') _titleEl.textContent = MOBILE_VIEW_TITLES[view] || view;
+  document.querySelectorAll('#mobileNav .mnav-item').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-view') === view);
+  });
+}
+
+function toggleSidebar() {
+  const sb = document.getElementById('sidebar');
+  sidebarOpen = !sidebarOpen;
+  if (sidebarOpen) { sb.style.width='220px'; sb.style.minWidth='220px'; sb.classList.remove('sidebar-collapsed'); document.getElementById('sidebarToggleIcon').setAttribute('d','M15 18l-6-6 6-6'); }
+  else { sb.style.width='56px'; sb.style.minWidth='56px'; sb.classList.add('sidebar-collapsed'); document.getElementById('sidebarToggleIcon').setAttribute('d','M9 18l6-6-6-6'); }
+}
+
+/* ──────────────────────────────────────────────────────
+   POS — PRODUCT GRID
+─────────────────────────────────────────────────────── */
+
+function buildCategoryTabs() {
+  const cats = ['All', ...new Set(inventory.map(p => p.category))];
+  const container = document.getElementById('categoryTabs');
+  container.innerHTML = cats.map(c => `
+    <button class="tab-btn flex-shrink-0 ${c===activeCategory?'active':''}" onclick="setCat('${c}',this)">${c}</button>
+  `).join('');
+}
+
+function setCat(cat, el) {
+  activeCategory = cat;
+  document.querySelectorAll('#categoryTabs .tab-btn').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  filterProducts(document.getElementById('productSearch').value);
+}
+
+function filterProducts(query='') {
+  const uomF = document.getElementById('uomFilter').value;
+  const q = query.toLowerCase();
+  const filtered = inventory.filter(p => {
+    const catMatch = activeCategory === 'All' || p.category === activeCategory;
+    const searchMatch = !q || p.name.toLowerCase().includes(q) || p.id.toLowerCase().includes(q) || p.barcode.includes(q);
+    const uomMatch = !uomF || p.uom === uomF;
+    return catMatch && searchMatch && uomMatch;
+  });
+  renderProductGrid(filtered);
+}
+
+function renderProductGrid(products) {
+  const grid = document.getElementById('productGrid');
+  if (!products.length) { grid.innerHTML = `<div class="col-span-full flex flex-col items-center py-12 text-[#64748B]"><svg width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg><p class="mt-2 text-sm">No cosmetics found</p></div>`; return; }
+  grid.innerHTML = products.map(p => {
+    const oos = p.stock <= 0;
+    const low = p.stock > 0 && p.stock <= p.reorder;
+    const statusBadge = oos ? '<span class="badge badge-danger text-[9px]">Out of Stock</span>' : low ? '<span class="badge badge-warn text-[9px]">Low Stock</span>' : '<span class="badge badge-success text-[9px]">In Stock</span>';
+    return `<div class="product-card${oos?' out-of-stock':''}" onclick="addToCart('${p.id}')">
+      <div class="text-[10px] text-[#64748B] mono mb-1">${p.id}</div>
+      <div class="text-sm font-semibold text-[#0F172A] leading-tight mb-2">${p.name}</div>
+      <div class="flex items-center justify-between mb-1">
+        <span class="text-base font-bold text-[#0EA5E9]">₨ ${p.sale.toLocaleString()}</span>
+        <span class="text-[10px] text-[#64748B]">${p.uom}</span>
+      </div>
+      <div class="flex items-center justify-between">
+        ${statusBadge}
+        <span class="text-[10px] text-[#64748B]">${p.stock} left</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ──────────────────────────────────────────────────────
+   CART MANAGEMENT
+─────────────────────────────────────────────────────── */
+function addToCart(id) {
+  const product = inventory.find(p => p.id === id);
+  if (!product || product.stock <= 0) return;
+  const existing = cart.find(i => i.id === id);
+  if (existing) {
+    if (existing.qty >= product.stock) { toast('Maximum available stock reached', 'warn'); return; }
+    existing.qty++;
+  } else {
+    cart.push({ id, name:product.name, qty:1, sale:product.sale, cost:product.cost, uom:product.uom, maxQty:product.stock });
+  }
+  renderCart();
+  recalcCart();
+}
+
+function removeFromCart(id, isVoid=false) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  if (isVoid) {
+    const entry = {
+      ts: new Date().toLocaleString(),
+      type: 'Void Item',
+      cashier: currentRole,
+      ref: 'LIVE-BILL',
+      desc: `Voided: ${item.name} × ${item.qty}`,
+      amount: item.qty * item.sale,
+      synced: false
+    };
+    auditLogs.unshift(entry);
+    syncToGoogleSheets('auditVoid', entry);
+    toast(`Void logged: ${item.name}`, 'warn');
+  }
+  cart = cart.filter(i => i.id !== id);
+  renderCart();
+  recalcCart();
+}
+
+function updateCartQty(id, delta) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, Math.min(item.maxQty, item.qty + delta));
+  renderCart();
+  recalcCart();
+}
+
+function renderCart() {
+  const container = document.getElementById('cartItems');
+  if (!cart.length) {
+    container.innerHTML = `<div class="flex flex-col items-center py-10 text-[#64748B]">
+      <svg width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6"/></svg>
+      <p class="mt-2 text-xs">Cart is empty</p>
+      <p class="text-[10px] mt-0.5">Click a product to add it</p>
+    </div>`; return;
+  }
+  container.innerHTML = cart.map(item => `
+    <div class="cart-item">
+      <div class="flex-1 min-w-0">
+        <div class="text-xs font-semibold text-[#0F172A] truncate">${item.name}</div>
+        <div class="text-[10px] text-[#64748B]">₨ ${item.sale.toLocaleString()} / ${item.uom}</div>
+      </div>
+      <div class="flex items-center gap-1">
+        <button onclick="updateCartQty('${item.id}',-1)" class="w-6 h-6 rounded flex items-center justify-center bg-[#F1F5F9] text-[#334155] hover:bg-[#E2E8F0] text-sm font-bold">−</button>
+        <input type="number" value="${item.qty}" min="1" max="${item.maxQty}" onchange="setCartQty('${item.id}',this.value)" class="w-10 text-center text-xs border border-[#E2E8F0] rounded py-0.5 input" style="padding:2px 4px" />
+        <button onclick="updateCartQty('${item.id}',1)" class="w-6 h-6 rounded flex items-center justify-center bg-[#F1F5F9] text-[#334155] hover:bg-[#E2E8F0] text-sm font-bold">+</button>
+      </div>
+      <div class="text-xs font-bold text-[#0F172A] w-16 text-right mono">₨ ${(item.qty*item.sale).toLocaleString()}</div>
+      <button onclick="removeFromCart('${item.id}',true)" class="text-[#DC2626] hover:opacity-70 text-sm ml-1" title="Void item">✕</button>
+    </div>
+  `).join('');
+}
+
+function setCartQty(id, val) {
+  const item = cart.find(i => i.id === id);
+  if (!item) return;
+  item.qty = Math.max(1, Math.min(item.maxQty, parseInt(val)||1));
+  recalcCart();
+}
+
+function recalcCart() {
+  const subtotal = cart.reduce((s,i) => s + i.qty*i.sale, 0);
+  const discVal = parseFloat(document.getElementById('discountVal').value||0);
+  const discType = document.getElementById('discountType').value;
+  const taxPct = parseFloat(document.getElementById('taxPct').value||0);
+  const disc = discType==='pct' ? subtotal * discVal/100 : discVal;
+  const afterDisc = Math.max(0, subtotal - disc);
+  const tax = afterDisc * taxPct/100;
+  const total = afterDisc + tax;
+
+  document.getElementById('subtotalDisp').textContent = `₨ ${subtotal.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+  document.getElementById('discountDisp').textContent = `₨ ${disc.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+  document.getElementById('taxDisp').textContent = `₨ ${tax.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+  document.getElementById('totalDisp').textContent = `₨ ${total.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+  document.getElementById('cartMeta').textContent = `${cart.length} item(s) · ₨ ${total.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+  calcChange();
+  return { subtotal, disc, tax, total };
+}
+
+function calcChange() {
+  const totalStr = document.getElementById('totalDisp').textContent.replace(/[₨,\s]/g,'');
+  const total = parseFloat(totalStr)||0;
+  const tendered = parseFloat(document.getElementById('cashTendered').value||0);
+  const change = Math.max(0, tendered - total);
+  document.getElementById('changeDisp').textContent = `₨ ${change.toLocaleString('en-PK',{minimumFractionDigits:2})}`;
+}
+
+function setPayment(method, el) {
+  paymentMethod = method;
+  document.querySelectorAll('[data-pm]').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  document.getElementById('cashTenderedRow').style.display = method==='Cash' ? '' : 'none';
+}
+
+function voidCart() {
+  if (!cart.length) return;
+  const entry = {
+    ts: new Date().toLocaleString(), type:'Cancel Bill', cashier:currentRole,
+    ref:'LIVE-BILL-VOID', desc:`Cancelled bill: ${cart.length} beauty item(s) voided`,
+    amount: cart.reduce((s,i)=>s+i.qty*i.sale,0), synced:false
+  };
+  auditLogs.unshift(entry);
+  syncToGoogleSheets('auditVoid', entry);
+  cart = [];
+  renderCart(); recalcCart();
+  toast('Bill cancelled and logged to Audit', 'warn');
+}
+
+function holdCart() {
+  if (!cart.length) { toast('Cart is empty', 'warn'); return; }
+  const totals = recalcCart();
+  heldCarts.push({ id: Date.now(), items:[...cart], total:totals.total, time:new Date().toLocaleTimeString() });
+  cart = [];
+  renderCart(); recalcCart(); renderHeldCarts();
+  toast(`Cart held (${heldCarts.length} held)`, 'info');
+}
+
+function renderHeldCarts() {
+  const container = document.getElementById('heldCarts');
+  const list = document.getElementById('heldCartList');
+  if (!heldCarts.length) { container.classList.add('hidden'); return; }
+  container.classList.remove('hidden');
+  list.innerHTML = heldCarts.map((hc,i) => `
+    <div class="flex items-center justify-between text-xs">
+      <span class="text-[#D97706]">[${hc.time}] ${hc.items.length} items · ₨${hc.total.toLocaleString()}</span>
+      <div class="flex gap-1">
+        <button onclick="restoreCart(${i})" class="text-[#0EA5E9] hover:underline">Restore</button>
+        <button onclick="dropHeld(${i})" class="text-[#DC2626] hover:underline">Drop</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function restoreCart(i) {
+  if (cart.length && !confirm('Replace current cart with held cart?')) return;
+  cart = [...heldCarts[i].items]; heldCarts.splice(i,1);
+  renderCart(); recalcCart(); renderHeldCarts();
+  toast('Held cart restored', 'success');
+}
+
+function dropHeld(i) { heldCarts.splice(i,1); renderHeldCarts(); }
+
+/* ──────────────────────────────────────────────────────
+   CHECKOUT
+─────────────────────────────────────────────────────── */
+function checkout() {
+  if (!cart.length) { toast('Cart is empty', 'warn'); return; }
+  const totals = recalcCart();
+  const cashTendered = parseFloat(document.getElementById('cashTendered').value||0);
+  if (paymentMethod==='Cash' && cashTendered < totals.total) { toast('Cash tendered is less than total', 'danger'); return; }
+  pendingCheckoutData = { ...totals, paymentMethod, cashTendered, change: Math.max(0,cashTendered-totals.total), items:[...cart] };
+  const summary = document.getElementById('checkoutSummary');
+  summary.innerHTML = `
+    <div class="space-y-2">
+      <div class="bg-[#F8FAFC] rounded-lg p-3 space-y-1 text-sm">
+        ${cart.map(i=>`<div class="flex justify-between"><span class="text-[#334155]">${i.name} × ${i.qty}</span><span class="mono font-bold">₨ ${(i.qty*i.sale).toLocaleString()}</span></div>`).join('')}
+      </div>
+      <div class="space-y-1 text-sm">
+        <div class="flex justify-between text-[#64748B]"><span>Subtotal</span><span class="mono">₨ ${totals.subtotal.toLocaleString('en-PK',{minimumFractionDigits:2})}</span></div>
+        <div class="flex justify-between text-[#D97706]"><span>Discount</span><span class="mono">- ₨ ${totals.disc.toLocaleString('en-PK',{minimumFractionDigits:2})}</span></div>
+        <div class="flex justify-between text-[#64748B]"><span>Tax</span><span class="mono">₨ ${totals.tax.toLocaleString('en-PK',{minimumFractionDigits:2})}</span></div>
+        <div class="flex justify-between font-bold text-[#0F172A] text-base pt-1 border-t border-[#E2E8F0]"><span>TOTAL</span><span class="mono">₨ ${totals.total.toLocaleString('en-PK',{minimumFractionDigits:2})}</span></div>
+        ${paymentMethod==='Cash' ? `<div class="flex justify-between text-[#16A34A]"><span>Change</span><span class="mono">₨ ${pendingCheckoutData.change.toLocaleString('en-PK',{minimumFractionDigits:2})}</span></div>` : ''}
+      </div>
+      <div class="flex items-center gap-2 bg-[#E0F2FE] rounded-lg p-2 text-xs">
+        <span class="font-bold text-[#0EA5E9]">Payment:</span>
+        <span class="text-[#334155]">${paymentMethod}</span>
+      </div>
+    </div>`;
+  openModal('modalCheckout');
+}
+
+function confirmCheckout() {
+  if (!pendingCheckoutData) return;
+  closeModal('modalCheckout');
+  const invoice = 'INV-' + String(salesLog.length+1).padStart(4,'0');
+  const now = new Date();
+  const profit = pendingCheckoutData.items.reduce((s,i)=>s+i.qty*(i.sale-i.cost),0) - pendingCheckoutData.disc;
+  const cashierName = currentUser ? currentUser.name : currentRole;
+
+  const sale = {
+    invoice, date: now.toLocaleString(), cashier: cashierName,
+    items: pendingCheckoutData.items.map(i=>({name:i.name,qty:i.qty,sale:i.sale,cost:i.cost})),
+    payment: paymentMethod, subtotal: pendingCheckoutData.subtotal,
+    discount: pendingCheckoutData.disc, tax: pendingCheckoutData.tax,
+    total: pendingCheckoutData.total, profit, status:'Completed'
+  };
+
+  pendingCheckoutData.items.forEach(ci => {
+    const prod = inventory.find(p=>p.id===ci.id);
+    if (prod) prod.stock = Math.max(0, prod.stock - ci.qty);
+  });
+
+  salesLog.unshift(sale);
+
+  if (paymentMethod==='Cash')      shiftData.cashSales  += pendingCheckoutData.total;
+  else if (paymentMethod==='Card') shiftData.cardSales  += pendingCheckoutData.total;
+  else                             shiftData.jazzSales  += pendingCheckoutData.total;
+  shiftData.transactions++;
+
+  syncToGoogleSheets('recordSale', sale);
+  printReceipt(sale, pendingCheckoutData.change);
+
+  cart = [];
+  document.getElementById('discountVal').value = '';
+  document.getElementById('cashTendered').value = '';
+  pendingCheckoutData = null;
+  renderCart(); recalcCart(); filterProducts(''); buildCategoryTabs();
+  toast(`${invoice} recorded successfully!`, 'success');
+}
+
+/* ──────────────────────────────────────────────────────
+   RECEIPT PRINTER
+─────────────────────────────────────────────────────── */
+function printReceipt(sale, change=0) {
+  // Build receipt HTML
+  const itemsHtml = sale.items.map(i =>
+    `<tr><td>${i.name}</td><td style="text-align:center">${i.qty}</td><td style="text-align:right">Rs ${(i.sale*i.qty).toLocaleString()}</td></tr>`
+  ).join('');
+
+  const receiptHtml = `<!DOCTYPE html>
+<html><head>
+<meta charset="UTF-8">
+<title>Receipt ${sale.invoice}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: 'Courier New', monospace; font-size: 12px; width: 80mm; margin: 0 auto; padding: 4mm; color: #000; }
+  .center { text-align: center; }
+  .bold { font-weight: bold; }
+  .big { font-size: 16px; font-weight: bold; }
+  .divider { border: none; border-top: 1px dashed #000; margin: 6px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 2px 0; vertical-align: top; }
+  td:last-child { text-align: right; white-space: nowrap; }
+  .totals td { padding: 1px 0; }
+  .total-row td { font-weight: bold; font-size: 14px; border-top: 1px dashed #000; padding-top: 4px; }
+  .footer { text-align: center; font-size: 10px; margin-top: 8px; }
+  @media print {
+    @page { size: 80mm auto; margin: 0; }
+    body { padding: 2mm; }
+  }
+</style>
+</head><body>
+  <div class="center">
+    <div class="big">PrimeCosmetics</div>
+    <div>Cosmetics & Beauty Store</div>
+    <div style="font-size:10px; margin-top:2px">${new Date().toLocaleString('en-PK')}</div>
+  </div>
+  <hr class="divider">
+  <div>Invoice: <b>${sale.invoice}</b></div>
+  <div>Cashier: ${sale.cashier}</div>
+  <div>Payment: ${sale.payment}</div>
+  <hr class="divider">
+  <table>
+    <thead><tr>
+      <td class="bold">Item</td>
+      <td style="text-align:center" class="bold">Qty</td>
+      <td style="text-align:right" class="bold">Amount</td>
+    </tr></thead>
+    <tbody>${itemsHtml}</tbody>
+  </table>
+  <hr class="divider">
+  <table class="totals">
+    <tr><td>Subtotal</td><td>Rs ${sale.subtotal.toLocaleString()}</td></tr>
+    ${sale.discount ? `<tr><td>Discount</td><td>- Rs ${sale.discount.toLocaleString()}</td></tr>` : ''}
+    ${sale.tax ? `<tr><td>Tax</td><td>Rs ${sale.tax.toLocaleString()}</td></tr>` : ''}
+    <tr class="total-row"><td>TOTAL</td><td>Rs ${sale.total.toLocaleString()}</td></tr>
+    ${change ? `<tr><td>Cash Tendered</td><td>Rs ${(sale.total + change).toLocaleString()}</td></tr><tr><td>Change</td><td>Rs ${change.toLocaleString()}</td></tr>` : ''}
+  </table>
+  <hr class="divider">
+  <div class="footer">
+    Thank you for shopping!<br>
+    Exchange within 7 days with receipt.
+  </div>
+</body></html>`;
+
+  // Open in popup window — only receipt prints, not the whole page
+  const printWin = window.open('', '_blank', 'width=340,height=600,toolbar=0,menubar=0,scrollbars=1');
+  if (!printWin) {
+    // Popup blocked fallback — use iframe method
+    let iframe = document.getElementById('receiptIframe');
+    if (!iframe) {
+      iframe = document.createElement('iframe');
+      iframe.id = 'receiptIframe';
+      iframe.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:340px;height:600px;border:none;';
+      document.body.appendChild(iframe);
+    }
+    iframe.contentDocument.open();
+    iframe.contentDocument.write(receiptHtml);
+    iframe.contentDocument.close();
+    setTimeout(() => { iframe.contentWindow.focus(); iframe.contentWindow.print(); }, 400);
+    return;
+  }
+  printWin.document.write(receiptHtml);
+  printWin.document.close();
+  printWin.focus();
+  setTimeout(() => { printWin.print(); printWin.close(); }, 400);
+}
+
+/* ──────────────────────────────────────────────────────
+   SHORTCUTS & INVENTORY RENDERING
+─────────────────────────────────────────────────────── */
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+    if (e.key === 'Tab' && e.target.id !== 'productSearch') return;
+  }
+  if (e.key === 'F2') { e.preventDefault(); checkout(); }
+  if (e.key === 'F4') { e.preventDefault(); holdCart(); }
+  if (e.key === 'F8') { e.preventDefault(); document.getElementById('discountVal').focus(); }
+});
+
+function renderInventoryKpis() {
+  const totalVal = inventory.reduce((s,p)=>s+p.stock*p.cost,0);
+  const saleVal  = inventory.reduce((s,p)=>s+p.stock*p.sale,0);
+  const lowStock = inventory.filter(p=>p.stock>0&&p.stock<=p.reorder).length;
+  const oos      = inventory.filter(p=>p.stock<=0).length;
+  document.getElementById('invKpis').innerHTML = `
+    ${kpiCard('Total Items',inventory.length,'🛍️','info')}
+    ${kpiCard('Stock Cost Value','₨ '+totalVal.toLocaleString(),'💰','info','cashier-hidden')}
+    ${kpiCard('Stock Sale Value','₨ '+saleVal.toLocaleString(),'📈','success','cashier-hidden')}
+    ${kpiCard('Low / Out of Stock',lowStock+' / '+oos,'⚠️','danger')}
+  `;
+}
+
+function renderInventoryTable(q='') {
+  const catF = document.getElementById('invCatFilter')?.value||'';
+  const query = (q||'').toLowerCase();
+  const filtered = inventory.filter(p=>
+    (!query || p.name.toLowerCase().includes(query)||p.id.toLowerCase().includes(query)||p.category.toLowerCase().includes(query)) &&
+    (!catF || p.category===catF)
+  );
+  document.getElementById('invCount').textContent = filtered.length;
+  const body = document.getElementById('invTableBody');
+  if (!filtered.length){ body.innerHTML=`<tr><td colspan="11" class="text-center py-6 text-[#64748B]">No cosmetic items found</td></tr>`; return; }
+  body.innerHTML = filtered.map(p => {
+    const margin = p.sale>0 ? ((p.sale-p.cost)/p.sale*100).toFixed(1) : 0;
+    const status = p.stock<=0 ? 'badge-danger' : p.stock<=p.reorder ? 'badge-warn' : 'badge-success';
+    const statusLbl = p.stock<=0 ? 'Out of Stock' : p.stock<=p.reorder ? 'Low Stock' : 'In Stock';
+    return `<tr>
+      <td class="mono text-xs">${p.id}<br><span class="text-[10px] text-[#94A3B8]">${p.barcode}</span></td>
+      <td><div class="font-medium text-[#0F172A]">${p.name}</div><div class="text-[10px] text-[#64748B]">${p.supplier}</div></td>
+      <td><span class="badge badge-info">${p.category}</span></td>
+      <td class="text-xs">${p.uom}${p.piecesPerUom>1?` (${p.piecesPerUom}pc)`:''}</td>
+      <td class="font-bold text-[#0F172A]">${p.stock}</td>
+      <td class="text-[#64748B]">${p.reorder}</td>
+      <td class="mono text-xs cashier-hidden">₨ ${p.cost.toLocaleString()}</td>
+      <td class="mono text-xs font-semibold">₨ ${p.sale.toLocaleString()}</td>
+      <td class="cashier-hidden"><span class="badge ${parseFloat(margin)>=30?'badge-success':parseFloat(margin)>=15?'badge-warn':'badge-danger'}">${margin}%</span></td>
+      <td><span class="badge ${status}">${statusLbl}</span></td>
+      <td>
+        <div class="flex gap-1">
+          <button onclick="openEditProduct('${p.id}')" class="text-[#0EA5E9] hover:underline text-xs">Edit</button>
+          <button onclick="deleteProduct('${p.id}')" class="text-[#DC2626] hover:underline text-xs admin-only">Del</button>
+        </div>
+      </td>
+    </tr>`;
+  }).join('');
+  applyRolePermissions();
+}
+
+function populateCategoryFilter() {
+  const sel = document.getElementById('invCatFilter');
+  const cats = [...new Set(inventory.map(p=>p.category))];
+  sel.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option>${c}</option>`).join('');
+}
+
+function openAddProduct() {
+  avcoEditIndex = null;
+  ['pSku','pName','pCategory','pUom','pPiecesPerUom','pStock','pReorder','pCost','pSale','pSupplier','pDesc'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.tagName==='SELECT' ? el.selectedIndex=0 : el.value = id==='pPiecesPerUom'?1:''; }
+  });
+  document.getElementById('productModalTitle').textContent = 'Add Product';
+  openModal('modalProduct');
+}
+
+function openEditProduct(id) {
+  const p = inventory.find(x=>x.id===id);
+  if (!p) return;
+  avcoEditIndex = id;
+  document.getElementById('pSku').value = p.id;
+  document.getElementById('pName').value = p.name;
+  document.getElementById('pCategory').value = p.category;
+  document.getElementById('pUom').value = p.uom;
+  document.getElementById('pPiecesPerUom').value = p.piecesPerUom;
+  document.getElementById('pStock').value = p.stock;
+  document.getElementById('pReorder').value = p.reorder;
+  document.getElementById('pCost').value = p.cost;
+  document.getElementById('pSale').value = p.sale;
+  document.getElementById('pSupplier').value = p.supplier;
+  document.getElementById('pDesc').value = p.desc;
+  document.getElementById('productModalTitle').textContent = 'Edit Product';
+  openModal('modalProduct');
+}
+
+function saveProduct() {
+  const sku   = document.getElementById('pSku').value.trim();
+  const name  = document.getElementById('pName').value.trim();
+  const cost  = parseFloat(document.getElementById('pCost').value||0);
+  const sale  = parseFloat(document.getElementById('pSale').value||0);
+  const stock = parseInt(document.getElementById('pStock').value||0);
+  if (!sku||!name||!cost||!sale) { toast('Please fill required fields','warn'); return; }
+  const data = {
+    id:sku, barcode: 'BC-'+sku, name, category:document.getElementById('pCategory').value,
+    uom:document.getElementById('pUom').value, piecesPerUom:parseInt(document.getElementById('pPiecesPerUom').value||1),
+    stock, reorder:parseInt(document.getElementById('pReorder').value||0), cost, sale,
+    supplier:document.getElementById('pSupplier').value, desc:document.getElementById('pDesc').value
+  };
+  if (avcoEditIndex) {
+    const idx = inventory.findIndex(p=>p.id===avcoEditIndex);
+    if (idx>=0) inventory[idx] = data;
+    toast('Product updated','success');
+  } else {
+    if (inventory.find(p=>p.id===sku)) { toast('SKU already exists','danger'); return; }
+    inventory.push(data);
+    toast('Product added','success');
+  }
+  closeModal('modalProduct');
+  renderInventoryTable(); renderInventoryKpis(); buildCategoryTabs();
+  syncToGoogleSheets('updateInventory', data);
+}
+
+function deleteProduct(id) {
+  if (currentRole!=='admin') { toast('Only admins can delete products','danger'); return; }
+  if (!confirm('Delete this product?')) return;
+  inventory = inventory.filter(p=>p.id!==id);
+  renderInventoryTable(); renderInventoryKpis(); buildCategoryTabs();
+  toast('Product deleted','success');
+}
+
+/* ──────────────────────────────────────────────────────
+   AVCO, UOM & SALES OPERATIONS
+─────────────────────────────────────────────────────── */
+
+function openAvcoCalc() { renderAvcoBatches(); calcAvco(); openModal('modalAvco'); }
+function renderAvcoBatches() {
+  document.getElementById('avcoBatches').innerHTML = avcoBatches.map((b,i) => `
+    <div class="flex gap-2 items-center">
+      <input type="number" value="${b.units}" placeholder="Units" class="input text-xs py-1.5 flex-1" oninput="avcoBatches[${i}].units=+this.value;calcAvco()" />
+      <input type="number" value="${b.cost}" placeholder="Cost/unit (₨)" class="input text-xs py-1.5 flex-1" oninput="avcoBatches[${i}].cost=+this.value;calcAvco()" />
+      <button onclick="avcoBatches.splice(${i},1);renderAvcoBatches();calcAvco()" class="text-[#DC2626] text-sm">✕</button>
+    </div>
+  `).join('');
+}
+function addAvcoBatch() { avcoBatches.push({units:0,cost:0}); renderAvcoBatches(); }
+function calcAvco() {
+  const totalUnits = avcoBatches.reduce((s,b)=>s+b.units,0);
+  const totalCost  = avcoBatches.reduce((s,b)=>s+b.units*b.cost,0);
+  const avg = totalUnits>0 ? totalCost/totalUnits : 0;
+  document.getElementById('avcoUnits').textContent = totalUnits;
+  document.getElementById('avcoTotal').textContent = `₨ ${totalCost.toLocaleString()}`;
+  document.getElementById('avcoResult').textContent = `₨ ${avg.toFixed(2)}`;
+}
+
+function openUomConv() {
+  const sel = document.getElementById('uomProd');
+  sel.innerHTML = inventory.map(p=>`<option value="${p.id}">${p.name} (${p.uom})</option>`).join('');
+  updateUomConv();
+  openModal('modalUom');
+}
+function updateUomConv() {
+  document.getElementById('uomCartons').value = '';
+  document.getElementById('uomPieces').value = '';
+  const p = inventory.find(x=>x.id===document.getElementById('uomProd').value);
+  if (!p) return;
+  document.getElementById('uomDetails').innerHTML = `
+    <div class="flex justify-between"><span class="text-[#64748B]">UOM</span><span class="font-bold">${p.uom}</span></div>
+    <div class="flex justify-between"><span class="text-[#64748B]">Pieces per ${p.uom}</span><span class="font-bold">${p.piecesPerUom}</span></div>
+    <div class="flex justify-between"><span class="text-[#64748B]">Current Stock</span><span class="font-bold">${p.stock} ${p.uom}(s)</span></div>
+  `;
+}
+function uomCalc(dir) {
+  const p = inventory.find(x=>x.id===document.getElementById('uomProd').value);
+  if (!p) return;
+  if (dir==='carton') {
+    const c = parseFloat(document.getElementById('uomCartons').value||0);
+    document.getElementById('uomPieces').value = c * p.piecesPerUom;
+  } else {
+    const pc = parseFloat(document.getElementById('uomPieces').value||0);
+    document.getElementById('uomCartons').value = (pc / p.piecesPerUom).toFixed(2);
+  }
+}
+
+function renderSalesLog() {
+  const dateF = document.getElementById('salesDateFilter').value;
+  const filtered = dateF ? salesLog.filter(s=>s.date.startsWith(dateF)) : salesLog;
+  const body = document.getElementById('salesTableBody');
+  if (!filtered.length){ body.innerHTML=`<tr><td colspan="11" class="text-center py-6 text-[#64748B]">No cosmetics sales records found</td></tr>`; return; }
+  body.innerHTML = filtered.map(s => `
+    <tr>
+      <td class="mono text-xs font-bold text-[#0EA5E9]">${s.invoice}</td>
+      <td class="text-xs">${s.date}</td>
+      <td class="text-xs">${s.cashier}</td>
+      <td class="text-xs">${s.items.map(i=>`${i.name}×${i.qty}`).join(', ')}</td>
+      <td><span class="badge badge-info">${s.payment}</span></td>
+      <td class="mono text-xs">₨ ${s.subtotal.toLocaleString()}</td>
+      <td class="mono text-xs text-[#D97706]">${s.discount?'-₨'+s.discount.toLocaleString():'-'}</td>
+      <td class="mono text-xs">${s.tax?'₨'+s.tax.toLocaleString():'-'}</td>
+      <td class="mono text-xs font-bold">₨ ${s.total.toLocaleString()}</td>
+      <td class="mono text-xs cashier-hidden ${s.profit>=0?'text-[#16A34A]':'text-[#DC2626]'}">₨ ${s.profit.toLocaleString()}</td>
+      <td><span class="badge badge-success">${s.status}</span></td>
+    </tr>
+  `).join('');
+  applyRolePermissions();
+}
+
+function renderSalesKpis() {
+  const tot = salesLog.reduce((s,x)=>s+x.total,0);
+  const prof = salesLog.reduce((s,x)=>s+x.profit,0);
+  const avgTx = salesLog.length ? tot/salesLog.length : 0;
+  const cashT = salesLog.filter(s=>s.payment==='Cash').reduce((s,x)=>s+x.total,0);
+  document.getElementById('salesKpis').innerHTML = `
+    ${kpiCard('Total Revenue','₨ '+tot.toLocaleString(),'💹','success')}
+    ${kpiCard('Gross Profit','₨ '+prof.toLocaleString(),'📊','success','cashier-hidden')}
+    ${kpiCard('Avg Transaction','₨ '+avgTx.toLocaleString('en-PK',{maximumFractionDigits:0}),'🔄','info')}
+    ${kpiCard('Cash Collections','₨ '+cashT.toLocaleString(),'💵','info')}
+  `;
+  applyRolePermissions();
+}
+
+function exportSalesCSV() {
+  const headers = ['Invoice','Date','Cashier','Items','Payment','Subtotal','Discount','Tax','Total','Profit','Status'];
+  const rows = salesLog.map(s=>[s.invoice,s.date,s.cashier,s.items.map(i=>`${i.name}x${i.qty}`).join('|'),s.payment,s.subtotal,s.discount,s.tax,s.total,s.profit,s.status]);
+  const csv = [headers,...rows].map(r=>r.map(v=>`"${v}"`).join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = 'data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download = 'nexapos_cosmetics_sales_'+new Date().toISOString().slice(0,10)+'.csv';
+  a.click();
+}
+
+/* ──────────────────────────────────────────────────────
+   EXPENSES, REPORTS & RECONCILIATION
+─────────────────────────────────────────────────────── */
+function openAddExpense() {
+  document.getElementById('eDate').value = new Date().toISOString().slice(0,10);
+  ['eCategory','eDesc','eAmount','eRef'].forEach(id=>{ const el=document.getElementById(id); if(el) el.tagName==='SELECT'?el.selectedIndex=0:el.value=''; });
+  openModal('modalExpense');
+}
+
+function saveExpense() {
+  const date   = document.getElementById('eDate').value;
+  const cat    = document.getElementById('eCategory').value;
+  const desc   = document.getElementById('eDesc').value.trim();
+  const amount = parseFloat(document.getElementById('eAmount').value||0);
+  const ref    = document.getElementById('eRef').value.trim();
+  if (!date||!desc||!amount) { toast('Please fill required fields','warn'); return; }
+  const exp = { id:'EXP-'+String(expenses.length+1).padStart(3,'0'), date, category:cat, desc, amount, ref, loggedBy:currentRole };
+  expenses.unshift(exp);
+  closeModal('modalExpense');
+  renderExpenses(); renderExpKpis();
+  syncToGoogleSheets('logExpense', exp);
+  toast('Expense logged','success');
+}
+
+function renderExpenses() {
+  const body = document.getElementById('expTableBody');
+  if (!expenses.length){ body.innerHTML=`<tr><td colspan="6" class="text-center py-6 text-[#64748B]">No expenses logged</td></tr>`; return; }
+  body.innerHTML = expenses.map(e=>`
+    <tr>
+      <td class="text-xs">${e.date}</td>
+      <td><span class="badge badge-warn">${e.category}</span></td>
+      <td class="text-xs">${e.desc}</td>
+      <td class="mono text-xs font-bold text-[#0F172A]">₨ ${e.amount.toLocaleString()}</td>
+      <td class="text-xs">${e.loggedBy}</td>
+      <td><button onclick="deleteExpense('${e.id}')" class="btn-danger text-[10px] admin-only">Delete</button></td>
+    </tr>
+  `).join('');
+  applyRolePermissions();
+}
+
+function renderExpKpis() {
+  const total = expenses.reduce((s,e)=>s+e.amount,0);
+  const cats = [...new Set(expenses.map(e=>e.category))];
+  const biggest = cats.reduce((a,c)=>{ const t=expenses.filter(e=>e.category===c).reduce((s,e)=>s+e.amount,0); return t>a.v?{c,v:t}:a; },{c:'',v:0});
+  document.getElementById('expKpis').innerHTML = `
+    ${kpiCard('Total Expenses','₨ '+total.toLocaleString(),'📤','danger')}
+    ${kpiCard('Largest Category',biggest.c||'—','🏷️','warn')}
+    ${kpiCard('Total Entries',expenses.length,'📋','info')}
+  `;
+}
+
+function deleteExpense(id) {
+  if (currentRole!=='admin') { toast('Only admins can delete expenses','danger'); return; }
+  if (!confirm('Delete this expense?')) return;
+  expenses = expenses.filter(e=>e.id!==id);
+  renderExpenses(); renderExpKpis();
+}
+
+function renderReports() {
+  const period = document.getElementById('reportPeriod').value;
+  const now = new Date();
+  const filteredSales = salesLog.filter(s => {
+    const d = new Date(s.date);
+    if (period==='today') return d.toDateString()===now.toDateString();
+    if (period==='week') { const w=new Date(now); w.setDate(w.getDate()-7); return d>=w; }
+    if (period==='month') return d.getMonth()===now.getMonth()&&d.getFullYear()===now.getFullYear();
+    return true;
+  });
+
+  const rev  = filteredSales.reduce((s,x)=>s+x.total,0);
+  const prof = filteredSales.reduce((s,x)=>s+x.profit,0);
+  const exp  = expenses.reduce((s,e)=>s+e.amount,0);
+  const net  = prof - exp;
+  const stockVal = inventory.reduce((s,p)=>s+p.stock*p.cost,0);
+
+  document.getElementById('reportKpis').innerHTML = `
+    ${kpiCard('Revenue','₨ '+rev.toLocaleString(),'💹','success')}
+    ${kpiCard('Gross Profit','₨ '+prof.toLocaleString(),'📊','success','cashier-hidden')}
+    ${kpiCard('Total Expenses','₨ '+exp.toLocaleString(),'📤','danger','cashier-hidden')}
+    ${kpiCard('Net Profit','₨ '+net.toLocaleString(),'🏆',net>=0?'success':'danger','cashier-hidden')}
+  `;
+
+  const prodMap = {};
+  filteredSales.forEach(s=>s.items.forEach(i=>{ if(!prodMap[i.name]) prodMap[i.name]={qty:0,rev:0,prof:0}; prodMap[i.name].qty+=i.qty; prodMap[i.name].rev+=i.qty*i.sale; prodMap[i.name].prof+=i.qty*(i.sale-i.cost); }));
+  const topProds = Object.entries(prodMap).sort((a,b)=>b[1].rev-a[1].rev).slice(0,8);
+  document.getElementById('topProductsBody').innerHTML = topProds.map(([name,d])=>`
+    <tr><td class="text-xs">${name}</td><td class="text-xs font-bold">${d.qty}</td><td class="mono text-xs">₨${d.rev.toLocaleString()}</td><td class="mono text-xs text-[#16A34A] cashier-hidden">₨${d.prof.toLocaleString()}</td></tr>
+  `).join('');
+
+  const catRev = {};
+  filteredSales.forEach(s=>s.items.forEach(i=>{ const p=inventory.find(x=>x.name===i.name); if(p){ catRev[p.category]=(catRev[p.category]||0)+i.qty*i.sale; } }));
+  const maxCatRev = Math.max(...Object.values(catRev), 1);
+  document.getElementById('categoryBars').innerHTML = Object.entries(catRev).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`
+    <div><div class="flex justify-between text-xs mb-0.5"><span class="font-medium text-[#334155]">${cat}</span><span class="mono text-[#64748B]">₨${val.toLocaleString()}</span></div>
+    <div class="h-2 bg-[#E2E8F0] rounded-full"><div class="h-2 rounded-full" style="width:${(val/maxCatRev*100).toFixed(1)}%;background:#0EA5E9"></div></div></div>
+  `).join('');
+
+  const expCat = {};
+  expenses.forEach(e=>{ expCat[e.category]=(expCat[e.category]||0)+e.amount; });
+  const maxExp = Math.max(...Object.values(expCat), 1);
+  document.getElementById('expenseBars').innerHTML = Object.entries(expCat).sort((a,b)=>b[1]-a[1]).map(([cat,val])=>`
+    <div><div class="flex justify-between text-xs mb-0.5"><span class="font-medium text-[#334155]">${cat}</span><span class="mono text-[#64748B]">₨${val.toLocaleString()}</span></div>
+    <div class="h-2 bg-[#E2E8F0] rounded-full"><div class="h-2 rounded-full" style="width:${(val/maxExp*100).toFixed(1)}%;background:#D97706"></div></div></div>
+  `).join('');
+
+  document.getElementById('stockValContent').innerHTML = `
+    <div class="space-y-2 text-sm">
+      <div class="flex justify-between py-1 border-b border-[#E2E8F0]"><span class="text-[#64748B]">Total Brand SKUs</span><span class="font-bold">${inventory.length}</span></div>
+      <div class="flex justify-between py-1 border-b border-[#E2E8F0] cashier-hidden"><span class="text-[#64748B]">Cost Valuation</span><span class="mono font-bold">₨ ${stockVal.toLocaleString()}</span></div>
+      <div class="flex justify-between py-1 border-b border-[#E2E8F0] cashier-hidden"><span class="text-[#64748B]">Sale Valuation</span><span class="mono font-bold">₨ ${inventory.reduce((s,p)=>s+p.stock*p.sale,0).toLocaleString()}</span></div>
+    </div>
+  `;
+  applyRolePermissions();
+}
+
+function renderAuditLogs() {
+  const body = document.getElementById('auditTableBody');
+  if (!auditLogs.length){ body.innerHTML=`<tr><td colspan="7" class="text-center py-6 text-[#64748B]">No events logged</td></tr>`; return; }
+  body.innerHTML = auditLogs.map(a=>`
+    <tr>
+      <td class="mono text-xs">${a.ts}</td>
+      <td><span class="badge ${a.type.includes('Cancel')?'badge-danger':'badge-warn'}">${a.type}</span></td>
+      <td class="text-xs">${a.cashier}</td>
+      <td class="mono text-xs">${a.ref}</td>
+      <td class="text-xs">${a.desc}</td>
+      <td class="mono text-xs font-bold text-[#DC2626]">₨ ${a.amount.toLocaleString()}</td>
+      <td><span class="badge ${a.synced?'badge-success':'badge-warn'}">${a.synced?'Synced':'Pending'}</span></td>
+    </tr>
+  `).join('');
+}
+
+function openShiftEnd() {
+  const totalSales = shiftData.cashSales + shiftData.cardSales + shiftData.jazzSales;
+  document.getElementById('shiftStats').innerHTML = `
+    <div class="flex justify-between"><span class="text-[#64748B] text-xs">Shift Start</span><span class="text-xs font-bold">${new Date(shiftData.startTime).toLocaleString()}</span></div>
+    <div class="flex justify-between"><span class="text-[#64748B] text-xs">Transactions</span><span class="text-xs font-bold">${shiftData.transactions}</span></div>
+    <div class="flex justify-between"><span class="text-[#64748B] text-xs">Cash Sales</span><span class="text-xs mono font-bold">₨ ${shiftData.cashSales.toLocaleString()}</span></div>
+    <div class="flex justify-between"><span class="text-[#64748B] text-xs">Card Sales</span><span class="text-xs mono font-bold">₨ ${shiftData.cardSales.toLocaleString()}</span></div>
+    <div class="flex justify-between border-t pt-2 border-[#E2E8F0] mt-1"><span class="font-bold text-[#0F172A]">Total Revenue</span><span class="font-bold mono text-[#0EA5E9]">₨ ${totalSales.toLocaleString()}</span></div>
+  `;
+  document.getElementById('physicalCash').value = '';
+  document.getElementById('shiftEndOverlay').classList.remove('hidden');
+}
+
+function closeShiftEnd() { document.getElementById('shiftEndOverlay').classList.add('hidden'); }
+
+function calcCashVariance() {
+  const physical = parseFloat(document.getElementById('physicalCash').value||0);
+  const expected = shiftData.cashSales;
+  const diff = physical - expected;
+  document.getElementById('shiftReconcile').innerHTML = `
+    <div class="flex justify-between py-1"><span class="text-[#64748B]">Expected Cash</span><span class="mono font-bold">₨ ${expected.toLocaleString()}</span></div>
+    <div class="flex justify-between py-1 border-t border-[#E2E8F0] mt-1">
+      <span class="font-bold">Variance</span>
+      <span class="mono font-bold ${diff===0?'text-[#16A34A]':diff>0?'text-[#D97706]':'text-[#DC2626]'}">₨ ${diff.toLocaleString()}</span>
+    </div>
+  `;
+}
+
+function submitShiftEnd() {
+  const physical = parseFloat(document.getElementById('physicalCash').value||0);
+  const diff = physical - shiftData.cashSales;
+  const report = { ...shiftData, physicalCash:physical, variance:diff, closedAt:new Date().toISOString(), closedBy:currentRole };
+  syncToGoogleSheets('zReport', report);
+  closeShiftEnd();
+  shiftData = { startTime:new Date().toISOString(), cashSales:0, cardSales:0, jazzSales:0, transactions:0 };
+  toast('Shift closed. Z-Report submitted.','success');
+}
+
+function kpiCard(label, value, icon, type='info', extra='') {
+  const colorMap = { success:'text-[#16A34A] bg-[#DCFCE7]', warn:'text-[#D97706] bg-[#FEF3C7]', danger:'text-[#DC2626] bg-[#FEE2E2]', info:'text-[#0EA5E9] bg-[#E0F2FE]' };
+  return `<div class="kpi-card ${extra}">
+    <div class="flex items-start justify-between">
+      <div>
+        <p class="text-[10px] uppercase tracking-widest font-700 text-[#64748B] mb-1">${label}</p>
+        <p class="text-xl font-bold text-[#0F172A]">${value}</p>
+      </div>
+      <div class="w-9 h-9 rounded-lg flex items-center justify-center text-lg ${colorMap[type]}">${icon}</div>
+    </div>
+  </div>`;
+}
+
+function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
+function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.classList.add('hidden'); });
+});
+
+function toast(message, type='success') {
+  const colors = { success:'bg-[#DCFCE7] text-[#16A34A]', warn:'bg-[#FEF3C7] text-[#D97706]', danger:'bg-[#FEE2E2] text-[#DC2626]', info:'bg-[#E0F2FE] text-[#0EA5E9]' };
+  const icons  = { success:'✓', warn:'⚠', danger:'✕', info:'ℹ' };
+  const el = document.createElement('div');
+  el.className = `toast ${colors[type]||colors.info}`;
+  el.innerHTML = `<span class="font-bold">${icons[type]||'•'}</span><span>${message}</span>`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+/* ──────────────────────────────────────────────────────
+   RESPONSIVE / MOBILE FUNCTIONS
+─────────────────────────────────────────────────────── */
+const MOBILE_VIEW_TITLES = {
+  pos:'Point of Sale', inventory:'Inventory', sales:'Sales Log',
+  expenses:'Expenses', reports:'Reports', audit:'Audit Logs', users:'User Management'
+};
+
+function openMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const closeBtn = document.getElementById('mobileSidebarClose');
+  sb.classList.add('mobile-open');
+  overlay.classList.add('open');
+  if (closeBtn) closeBtn.style.display = '';
+}
+
+function closeMobileSidebar() {
+  const sb = document.getElementById('sidebar');
+  const overlay = document.getElementById('sidebarOverlay');
+  const closeBtn = document.getElementById('mobileSidebarClose');
+  sb.classList.remove('mobile-open');
+  overlay.classList.remove('open');
+  if (closeBtn) closeBtn.style.display = 'none';
+}
+
+function mobileNavClick(view, el) {
+  // Update bottom nav active state
+  document.querySelectorAll('#mobileNav .mnav-item').forEach(b => b.classList.remove('active'));
+  if (el) el.classList.add('active');
+  // Also update sidebar nav active state
+  document.querySelectorAll('.nav-link').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('data-view') === view);
+  });
+  switchView(view, null);
+  // Update mobile topbar title
+  const titleEl = document.getElementById('mobileViewTitle');
+  if (titleEl) titleEl.textContent = MOBILE_VIEW_TITLES[view] || view;
+}
+
+function updateMobileNavVisibility() {
+  // Apply role restrictions to mobile bottom nav
+  document.querySelectorAll('#mobileNav .mnav-item[data-roles]').forEach(el => {
+    const allowed = el.getAttribute('data-roles').split(',');
+    el.style.display = allowed.includes(currentRole) ? '' : 'none';
+  });
+}
+
+function isMobile() { return window.innerWidth < 768; }
+
+// switchView mobile integration moved into original function
+
+// onLoginSuccess mobile integration moved into original function
+
+(function init() {
+  // Check for saved session — restore if exists
+  try {
+    const saved = localStorage.getItem('nexapos_session');
+    if (saved) {
+      const session = JSON.parse(saved);
+      if (session && session.user && session.role) {
+        currentUser = session.user;
+        currentRole = session.role;
+        onLoginSuccess();
+        return;
+      }
+    }
+  } catch(e) {
+    localStorage.removeItem('nexapos_session');
+  }
+  // No session — show login page
+})();
+</script>
+</body>
+</html>
